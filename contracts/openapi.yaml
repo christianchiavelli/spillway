@@ -1,0 +1,389 @@
+openapi: 3.1.1
+info:
+  title: Spillway API
+  version: 1.0.0
+  license:
+    name: MIT
+    identifier: MIT
+  description: |
+    The API behind Spillway's web app.
+
+    Only the SvelteKit server calls it. Browsers never reach it, so it allows no
+    cross-origin requests, and it reads the session from a bearer token that the
+    web server keeps in an HTTP-only cookie.
+
+    Every error is an RFC 9457 problem. `code` says what went wrong in words a
+    program can switch on, and `errors` points at the fields to blame.
+
+servers:
+  - url: http://api:8080
+    description: Inside the compose network
+
+security:
+  - session: []
+
+tags:
+  - name: accounts
+    description: Who can sign in
+  - name: sessions
+    description: Signing in and out
+  - name: alerts
+    description: Thresholds on curtailed wind and solar energy, per subsystem
+
+paths:
+  /v1/accounts:
+    post:
+      operationId: createAccount
+      tags: [accounts]
+      summary: Create an account and start its first session
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewAccount'
+      responses:
+        '201':
+          description: The account, with a session already started for it
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionGrant'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /v1/sessions:
+    post:
+      operationId: createSession
+      tags: [sessions]
+      summary: Sign in with an email and a password
+      description: |
+        Wrong credentials answer `400` with code `invalid_credentials`, whether
+        the email exists or not, the way an OAuth token endpoint answers
+        `invalid_grant`: `401` only ever means a missing or refused session.
+        Repeated failures for one email answer `429` with code `rate_limited`
+        and a `Retry-After` header.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+      responses:
+        '201':
+          description: A new session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionGrant'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /v1/sessions/current:
+    get:
+      operationId: getCurrentSession
+      tags: [sessions]
+      summary: Read the session the token belongs to
+      description: |
+        Reading a session can extend it. `expiresAt` is always the current
+        deadline, so the caller can keep its cookie in step.
+      responses:
+        '200':
+          description: The session and its account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentSession'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: deleteCurrentSession
+      tags: [sessions]
+      summary: Sign out
+      responses:
+        '204':
+          description: The session is over
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /v1/alerts:
+    get:
+      operationId: listAlerts
+      tags: [alerts]
+      summary: List the account's alerts, newest first
+      description: An account holds at most 20 alerts, so the list is never paged.
+      responses:
+        '200':
+          description: Every alert of the account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertList'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: createAlert
+      tags: [alerts]
+      summary: Create an alert
+      description: |
+        Names are unique per account, ignoring case: a repeated name answers
+        `409` with code `conflict` and the error at `/name`. An account that
+        already holds 20 alerts answers `409` with code `alert_limit_reached`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewAlert'
+      responses:
+        '201':
+          description: The alert as stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /v1/alerts/{alertId}:
+    delete:
+      operationId: deleteAlert
+      tags: [alerts]
+      summary: Delete an alert
+      description: Another account's alert answers `404`, as if it did not exist.
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: The alert is gone
+        default:
+          $ref: '#/components/responses/Problem'
+
+components:
+  securitySchemes:
+    session:
+      type: http
+      scheme: bearer
+      description: The opaque token from a `SessionGrant`.
+
+  responses:
+    Problem:
+      description: Anything other than success, as an RFC 9457 problem
+      headers:
+        Retry-After:
+          description: Seconds to wait, sent with `429` only
+          schema:
+            type: integer
+            minimum: 1
+        WWW-Authenticate:
+          description: |
+            The challenge sent with `401` only: `Bearer` when no session came
+            with the request, `Bearer error="invalid_token"` when the one that
+            came is over or unknown (RFC 6750)
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+  schemas:
+    Email:
+      type: string
+      format: email
+      minLength: 3
+      maxLength: 254
+      examples: [ana@example.com]
+
+    NewAccount:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          description: |
+            At least 15 characters, as NIST SP 800-63B-4 asks of a password that
+            is the only factor. No rules about which characters.
+          type: string
+          minLength: 15
+          maxLength: 128
+
+    Credentials:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          description: Checked as given. The length rule of a new password is not repeated here.
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    Account:
+      type: object
+      required: [id, email]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          $ref: '#/components/schemas/Email'
+
+    SessionGrant:
+      type: object
+      required: [token, expiresAt, account]
+      properties:
+        token:
+          description: Opaque. Keep it out of logs and out of the browser's reach.
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        account:
+          $ref: '#/components/schemas/Account'
+
+    CurrentSession:
+      type: object
+      required: [expiresAt, account]
+      properties:
+        expiresAt:
+          type: string
+          format: date-time
+        account:
+          $ref: '#/components/schemas/Account'
+
+    Source:
+      description: Where the curtailed energy would have come from
+      type: string
+      enum: [wind, solar]
+
+    Subsystem:
+      description: |
+        A subsystem of Brazil's interconnected grid, as the ONS names them:
+        `N` North, `NE` Northeast, `SE` Southeast and Centre-West, `S` South.
+      type: string
+      # Quoted on purpose: a YAML 1.1 parser, like the one ogen uses, reads a bare N as false.
+      enum: ['N', 'NE', 'SE', 'S']
+
+    AlertName:
+      description: Unique per account, ignoring case. Spaces at either end are trimmed.
+      type: string
+      minLength: 1
+      maxLength: 80
+
+    Threshold:
+      description: Curtailed energy in one day, in MWh, that sets the alert off
+      type: integer
+      format: int32
+      minimum: 1
+      maximum: 1000000
+
+    NewAlert:
+      type: object
+      additionalProperties: false
+      required: [name, source, subsystem, thresholdMwh]
+      properties:
+        name:
+          $ref: '#/components/schemas/AlertName'
+        source:
+          $ref: '#/components/schemas/Source'
+        subsystem:
+          $ref: '#/components/schemas/Subsystem'
+        thresholdMwh:
+          $ref: '#/components/schemas/Threshold'
+
+    Alert:
+      type: object
+      required: [id, name, source, subsystem, thresholdMwh, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          $ref: '#/components/schemas/AlertName'
+        source:
+          $ref: '#/components/schemas/Source'
+        subsystem:
+          $ref: '#/components/schemas/Subsystem'
+        thresholdMwh:
+          $ref: '#/components/schemas/Threshold'
+        createdAt:
+          type: string
+          format: date-time
+
+    AlertList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/Alert'
+
+    ProblemCode:
+      description: |
+        What went wrong, for programs to switch on. New codes may be added, so
+        treat an unknown one as `internal`.
+      type: string
+      enum:
+        - malformed_request
+        - validation_failed
+        - unauthenticated
+        - invalid_credentials
+        - forbidden_origin
+        - not_found
+        - method_not_allowed
+        - conflict
+        - alert_limit_reached
+        - request_too_large
+        - unsupported_media_type
+        - rate_limited
+        - internal
+
+    FieldError:
+      type: object
+      required: [pointer, code]
+      properties:
+        pointer:
+          description: JSON Pointer (RFC 6901) to the field in the request body
+          type: string
+          examples: [/name]
+        code:
+          description: |
+            One of `required`, `too_short`, `too_long`, `out_of_range`,
+            `invalid` or `taken`. New codes may be added.
+          type: string
+
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type:
+          description: A URI naming the problem type. `about:blank` when the status says it all.
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        code:
+          $ref: '#/components/schemas/ProblemCode'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
