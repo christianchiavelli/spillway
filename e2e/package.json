@@ -1,0 +1,22 @@
+{
+  "name": "@spillway/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "screenshots": "node screenshots.ts"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "catalog:",
+    "@eslint/js": "catalog:",
+    "@playwright/test": "catalog:",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:"
+  }
+}
