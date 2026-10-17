@@ -1,0 +1,10 @@
+# The web image builds from the repository root and needs only the workspace's
+# manifests and apps/web.
+*
+!package.json
+!pnpm-workspace.yaml
+!pnpm-lock.yaml
+!apps/web
+apps/web/node_modules
+apps/web/.svelte-kit
+apps/web/build

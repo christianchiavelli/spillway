@@ -1,0 +1,83 @@
+# The whole of Spillway on one machine: `docker compose up --wait --build`,
+# then http://localhost:8090.
+#
+# Postgres, the Go API and the SvelteKit server, all built from this checkout.
+# The password below is fine on a laptop and nowhere else; a `.env` file next
+# to this one overrides it.
+name: spillway
+
+x-database-url: &database-url postgres://spillway:${POSTGRES_PASSWORD:-spillway}@db:5432/spillway?sslmode=disable
+
+services:
+  db:
+    image: postgres:18.6-alpine3.24@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: spillway
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-spillway}
+      POSTGRES_DB: spillway
+    volumes:
+      # Postgres 18's image keeps its data under a directory named for the
+      # major version, inside this volume, so a later pg_upgrade can --link.
+      - db:/var/lib/postgresql
+    # No host port, so a Postgres already on 5432 is no obstacle. Reach it with
+    # `docker compose exec db psql --username spillway`.
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready --username spillway --dbname spillway']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 20s
+      start_interval: 1s
+
+  # The schema, applied once before the API starts, the way a deploy would run
+  # it: a job of its own, so the server never needs the right to change tables.
+  migrate:
+    # The api service's image, built from this checkout: nothing to pull.
+    image: spillway-api:local
+    pull_policy: never
+    command: ['migrate']
+    environment:
+      DATABASE_URL: *database-url
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: services/api
+    image: spillway-api:local
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: *database-url
+      LOG_FORMAT: json
+      # Only the web server calls the API, and never from a browser.
+      CORS_ALLOWED_ORIGINS: ''
+    # The image's healthcheck asks the admin port's /readyz. Neither port is
+    # published: 8080 serves the web server alone, and 9090 (/livez, /readyz,
+    # /metrics) whoever is on the stack's network.
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Where the app is opened. The CSRF check compares each form's Origin
+        # with it, so a form posted from another address is refused.
+        ORIGIN: http://localhost:8090
+    image: spillway-web:local
+    # Node is not built to be PID 1: tini forwards signals and reaps children.
+    init: true
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:8080
+    ports:
+      - '127.0.0.1:8090:3000'
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db:
