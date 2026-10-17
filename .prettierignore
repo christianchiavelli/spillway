@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+services/
+apps/web/src/lib/api/generated/
+apps/web/static/
+apps/web/build/
+apps/web/.svelte-kit/
+coverage/
+test-results/
+playwright-report/

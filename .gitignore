@@ -1,0 +1,30 @@
+node_modules/
+.pnpm-store/
+
+# Build output
+apps/web/build/
+apps/web/.svelte-kit/
+services/api/bin/
+
+# Tools
+openapi-ts-error-*.log
+
+# Tests
+coverage/
+test-results/
+playwright-report/
+blob-report/
+e2e/.auth/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Editors and systems
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+vite.config.ts.timestamp-*

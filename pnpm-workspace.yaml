@@ -1,0 +1,52 @@
+packages:
+  - apps/*
+  - e2e
+
+# One version of each dependency for the whole repository, checked at the
+# source on 17 October 2026. A package names `catalog:` instead of a range, so
+# an upgrade is one line here, reviewed once.
+#
+# TypeScript stays on 6.0: SvelteKit 3 asks for 6, and typescript-eslint
+# accepts nothing from 6.1 on, which keeps out the native TypeScript 7.
+catalog:
+  # Language and tooling
+  typescript: 6.0.3
+  '@types/node': 24.19.2
+  prettier: 3.9.10
+  prettier-plugin-svelte: 4.1.1
+  prettier-plugin-tailwindcss: 0.8.1
+  eslint: 10.13.0
+  '@eslint/js': 10.0.1
+  typescript-eslint: 8.71.2
+  eslint-plugin-svelte: 3.23.1
+  eslint-config-prettier: 10.1.8
+  globals: 17.13.0
+  vitest: 5.0.5
+  '@vitest/browser-playwright': 5.0.5
+  vitest-browser-svelte: 3.1.0
+  playwright: 1.64.1
+  '@playwright/test': 1.64.1
+  '@axe-core/playwright': 4.14.0
+
+  # Web app
+  svelte: 5.57.2
+  '@sveltejs/kit': 3.1.0
+  '@sveltejs/adapter-node': 6.0.0
+  '@sveltejs/vite-plugin-svelte': 7.3.1
+  svelte-check: 4.7.7
+  vite: 8.3.4
+  tailwindcss: 4.3.3
+  '@tailwindcss/vite': 4.3.3
+  tailwind-variants: 3.3.1
+  '@lucide/svelte': 1.58.0
+  '@fontsource-variable/open-sans': 5.3.0
+  '@fontsource-variable/lora': 5.3.0
+
+  # The API contract
+  '@hey-api/openapi-ts': 0.99.0
+  zod: 4.6.7
+
+minimumReleaseAgeExclude:
+  - '@lucide/svelte@1.58.0'
+  - eslint@10.13.0
+  - svelte-check@4.7.7

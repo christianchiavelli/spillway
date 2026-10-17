@@ -1,0 +1,36 @@
+{
+  "name": "spillway",
+  "version": "0.1.0",
+  "description": "How much wind and solar energy Brazil's grid operator keeps from being generated, on the ONS's open data",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "packageManager": "pnpm@12.14.0+sha512.c18ba6d87993d3d164cb5e8948f32b2c06ee854487e06cd8d86781342fb3e5bb4634367034711e86802baa9c37bea906ce1929ad08d70884c97d801df13389a6",
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "24.22.0",
+      "onFail": "download"
+    }
+  },
+  "engines": {
+    "node": "^24.22.0"
+  },
+  "scripts": {
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "contract:check": "pnpm --filter @spillway/web run api:check",
+    "ci": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "e2e": "pnpm --filter @spillway/e2e run test:e2e",
+    "screenshots": "pnpm --filter @spillway/e2e run screenshots"
+  },
+  "devDependencies": {
+    "prettier": "catalog:",
+    "prettier-plugin-svelte": "catalog:",
+    "prettier-plugin-tailwindcss": "catalog:"
+  }
+}
