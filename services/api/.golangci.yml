@@ -1,0 +1,92 @@
+# golangci-lint 2. The linters below catch what review keeps missing in Go:
+# unchecked errors, errors compared with == instead of errors.Is, contexts not
+# passed down, bodies and rows left open, and SQL or HTTP calls without one.
+version: '2'
+
+run:
+  build-tags: [integration]
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - contextcheck
+    - depguard
+    - copyloopvar
+    - errorlint
+    - exhaustive
+    - gocritic
+    - gosec
+    - intrange
+    - misspell
+    - noctx
+    - nolintlint
+    - perfsprint
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - unconvert
+    - usestdlibvars
+    - wrapcheck
+  settings:
+    depguard:
+      # Dependencies point inwards (ADR 0003): the domain imports nothing of
+      # ours but itself, and a use case nothing but the domain.
+      rules:
+        domain:
+          files: ['**/internal/domain/**']
+          deny:
+            - pkg: github.com/christianchiavelli/spillway/services/api/internal/app
+              desc: the domain does not know the use cases
+            - pkg: github.com/christianchiavelli/spillway/services/api/internal/adapter
+              desc: the domain does not know the adapters
+            - pkg: github.com/christianchiavelli/spillway/services/api/internal/platform
+              desc: the domain does not know the platform
+        app:
+          files: ['**/internal/app/**']
+          deny:
+            - pkg: github.com/christianchiavelli/spillway/services/api/internal/adapter
+              desc: a use case declares the interface it needs, and main.go wires an adapter in
+            - pkg: github.com/christianchiavelli/spillway/services/api/internal/platform
+              desc: a use case is given what it needs, it does not reach for it
+    errcheck:
+      # Closing what was only read has nothing useful to report.
+      exclude-functions:
+        - (io.ReadCloser).Close
+        - (*database/sql.DB).Close
+        - (net.Listener).Close
+    exhaustive:
+      default-signifies-exhaustive: true
+    revive:
+      rules:
+        - name: exported
+          arguments: [disableStutteringCheck]
+    wrapcheck:
+      # Errors from these are already in the words of this module.
+      ignore-package-globs:
+        - github.com/christianchiavelli/spillway/services/api/*
+      ignore-sigs:
+        - errors.New(
+        - errors.Join(
+        - fmt.Errorf(
+        # These return the errors of our own callbacks and goroutines.
+        - .BeginTxFunc(
+        - (*golang.org/x/sync/errgroup.Group).Wait(
+        # Decorators pass their inner errors through untouched, by contract.
+        - (net/http.ResponseWriter).Write(
+        - (log/slog.Handler).Handle(
+  exclusions:
+    generated: strict
+    rules:
+      # Tests may ignore errors they do not assert on and use plain HTTP.
+      - path: _test\.go
+        linters: [gosec, noctx, wrapcheck, bodyclose]
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/christianchiavelli/spillway
