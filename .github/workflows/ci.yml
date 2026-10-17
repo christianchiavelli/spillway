@@ -1,0 +1,186 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push to the same branch makes the run in flight irrelevant.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Every job only reads the code.
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: 'API: generated code, lint, tests and known vulnerabilities'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: services/api/go.mod
+          cache-dependency-path: services/api/go.sum
+
+      - name: Modules tidy and verified
+        run: go mod tidy -diff && go mod verify
+
+      # ogen from the contract, sqlc from the queries: what is committed must be
+      # what the generators write today.
+      - name: Generated code matches its sources
+        run: go generate ./... && git diff --exit-code -- . && test -z "$(git status --porcelain -- .)"
+
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.15.0
+          working-directory: services/api
+
+      - name: Unit tests, with the race detector
+        run: go test -race ./...
+
+      - name: Known vulnerabilities in the code that is called
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
+  api-integration:
+    name: 'API: integration tests against Postgres 18'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: services/api/go.mod
+          cache-dependency-path: services/api/go.sum
+
+      # Testcontainers starts postgres:18.6 on the runner's Docker.
+      - name: Integration tests
+        run: go test -race -tags integration ./internal/adapter/postgres/...
+
+  web:
+    name: 'Web: format, lint, types, unit and component tests, build'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      # Only to start pnpm: the runtime the scripts use is pinned by `devEngines`
+      # and downloaded by the install, as on a laptop.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # The component tests run in Chromium, through Vitest's browser mode.
+      - name: Browser for the component tests
+        run: pnpm --filter @spillway/web exec playwright install --with-deps chromium
+
+      - name: Checks and tests
+        run: pnpm run ci
+
+      - name: Build
+        run: pnpm --filter @spillway/web build
+
+  contract:
+    name: 'Contract: clients in step, no breaking change'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      # The whole history, to read the contract as the previous commit had it.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: services/api/go.mod
+          cache-dependency-path: services/api/go.sum
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # The Go server is checked in the api job; this is the TypeScript client.
+      - name: The web's client and schemas match the contract
+        run: pnpm run contract:check
+
+      # Changes go straight to main, so a push is compared with the commit
+      # before it, and a pull request with its base.
+      - name: No breaking change against the previous contract
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE" ] && git cat-file -e "$BASE:contracts/openapi.yaml" 2>/dev/null; then
+            git show "$BASE:contracts/openapi.yaml" > "$RUNNER_TEMP/base.yaml"
+            go run github.com/oasdiff/oasdiff@v1.33.0 breaking "$RUNNER_TEMP/base.yaml" contracts/openapi.yaml --fail-on ERR
+          else
+            echo "No earlier contract to compare with."
+          fi
+
+  e2e:
+    name: 'End to end: the stack from compose, in a browser'
+    needs: [api, web]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Browser
+        run: pnpm --filter @spillway/e2e exec playwright install --with-deps chromium
+
+      - name: Start the stack
+        run: docker compose up --wait --build
+
+      - name: Browser checks
+        run: pnpm run e2e
+
+      - name: Logs of the stack
+        if: ${{ failure() }}
+        run: docker compose logs --no-color
+
+      - name: Upload the report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 7
+
+      - name: Stop the stack
+        if: ${{ always() }}
+        run: docker compose down --volumes
