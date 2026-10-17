@@ -1,0 +1,298 @@
+/*
+ * The design system: colour, type, space, radius and elevation tokens, in
+ * Tailwind 4's @theme. The names say what a colour is for (text-, surface-,
+ * stroke-, icon-), not what it looks like. Tailwind's own scales are reset, so
+ * `p-4` cannot sit next to `p-400`, and two colours are picked for contrast
+ * (docs/adr/0009):
+ * - Error text is red-300, since red-200 falls short of 4.5:1 on white.
+ * - Control borders are grey-200, since a field's only outline needs 3:1.
+ */
+@import 'tailwindcss';
+
+@theme {
+  --color-*: initial;
+  --spacing-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --breakpoint-*: initial;
+  --text-*: initial;
+  --leading-*: initial;
+  --tracking-*: initial;
+  --font-weight-*: initial;
+  --font-*: initial;
+  --ease-*: initial;
+
+  /* Primitives */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-blue-50: #e3f4ff;
+  --color-blue-100: #28b4ff;
+  --color-blue-200: #0a64c8;
+  --color-blue-300: #003cb2;
+  --color-blue-400: #002296;
+  --color-blue-500: #002244;
+  --color-grey-25: #f9f9fa;
+  --color-grey-50: #edeff3;
+  --color-grey-100: #cfd3db;
+  --color-grey-150: #b2b9ca;
+  --color-grey-200: #6e768a;
+  --color-grey-300: #404e6c;
+  --color-grey-400: #29334b;
+  --color-grey-500: #1f2738;
+  --color-cool-grey-25: #f7f9fc;
+  --color-cool-grey-50: #ebeff6;
+  --color-cool-grey-100: #d5dcea;
+  --color-cool-grey-200: #6980b3;
+  --color-cool-grey-300: #2f4576;
+  --color-cool-grey-400: #283656;
+  --color-cool-grey-500: #11192d;
+  --color-turquoise-50: #e9feff;
+  --color-turquoise-100: #ace6f0;
+  --color-turquoise-200: #5ac4d4;
+  --color-turquoise-300: #2699ad;
+  --color-turquoise-400: #106076;
+  --color-turquoise-500: #032e3b;
+  --color-green-50: #e8ffe3;
+  --color-green-400: #246417;
+  --color-red-50: #ffd5d5;
+  --color-red-100: #f47070;
+  --color-red-200: #e51e56;
+  --color-red-300: #b71845;
+  --color-red-400: #730f2b;
+  --color-yellow-50: #fcf8d9;
+  --color-yellow-200: #eeaf00;
+  --color-yellow-400: #b05223;
+
+  /* Text */
+  --color-text-primary-default: var(--color-blue-500);
+  --color-text-primary-link: var(--color-blue-300);
+  --color-text-primary-link-hover: var(--color-blue-400);
+  --color-text-primary-disabled: var(--color-grey-200);
+  --color-text-secondary-default: var(--color-grey-300);
+  --color-text-on-dark-primary: var(--color-white);
+  --color-text-on-dark-secondary: var(--color-grey-100);
+  --color-text-semantic-success: #00847c;
+  --color-text-semantic-warning: var(--color-yellow-400);
+  --color-text-semantic-error: var(--color-red-300);
+  --color-text-semantic-info: var(--color-blue-300);
+
+  /* Surfaces */
+  --color-surface-canvas: var(--color-cool-grey-25);
+  --color-surface-container-primary: var(--color-white);
+  --color-surface-container-secondary: var(--color-cool-grey-50);
+  --color-surface-container-tertiary: var(--color-cool-grey-100);
+  --color-surface-container-hover: var(--color-blue-50);
+  --color-surface-primary-default: var(--color-blue-300);
+  --color-surface-primary-hover: var(--color-blue-400);
+  --color-surface-primary-disabled: var(--color-grey-150);
+  --color-surface-primary-dark: var(--color-grey-500);
+  --color-surface-primary-cool-dark: var(--color-cool-grey-500);
+  --color-surface-zebra: var(--color-cool-grey-25);
+
+  /* Strokes */
+  --color-stroke-neutral-default: var(--color-grey-100);
+  --color-stroke-neutral-hover: var(--color-grey-200);
+  --color-stroke-neutral-on-dark: var(--color-grey-300);
+  --color-stroke-control: var(--color-grey-200);
+  --color-stroke-control-hover: var(--color-grey-300);
+  --color-stroke-primary-default: var(--color-blue-300);
+  --color-stroke-primary-hover: var(--color-blue-400);
+  --color-stroke-error: var(--color-red-200);
+
+  /* Icons */
+  --color-icon-default: var(--color-grey-400);
+  --color-icon-secondary: var(--color-grey-300);
+  --color-icon-primary: var(--color-blue-300);
+  --color-icon-on-dark: var(--color-white);
+  --color-icon-disabled: var(--color-grey-200);
+  --color-icon-success: #00847c;
+  --color-icon-error: var(--color-red-200);
+
+  /* Fills for chips, bands and toasts */
+  --color-visual-light-blue: var(--color-blue-50);
+  --color-visual-light-green: var(--color-green-50);
+  --color-visual-light-red: var(--color-red-50);
+  --color-visual-light-neutral: var(--color-grey-50);
+  --color-visual-light-turquoise: var(--color-turquoise-50);
+  --color-visual-dark-turquoise: var(--color-turquoise-400);
+
+  /* Spacing: 2px to 72px */
+  --spacing-0: 0;
+  --spacing-100: 0.125rem;
+  --spacing-200: 0.25rem;
+  --spacing-300: 0.5rem;
+  --spacing-400: 0.75rem;
+  --spacing-500: 1rem;
+  --spacing-600: 1.5rem;
+  --spacing-700: 2rem;
+  --spacing-800: 2.5rem;
+  --spacing-1000: 3rem;
+  --spacing-1200: 4rem;
+  --spacing-1400: 4.5rem;
+
+  --radius-100: 0.125rem;
+  --radius-200: 0.25rem;
+  --radius-300: 0.5rem;
+  --radius-400: 0.75rem;
+  --radius-500: 1rem;
+  --radius-600: 1.5rem;
+  --radius-full: calc(infinity * 1px);
+
+  --shadow-raised: 0 1px 3px 0 #0000001a, 0 1px 2px -1px #0000001a;
+  --shadow-focus-lift: 0 2px 4px -2px #1d20270a, 0 8px 12px -4px #1a1c231a;
+  --shadow-overlay: 0 12px 28px -10px rgb(41 45 65 / 0.2), 0 12px 20px -10px rgb(37 40 53 / 0.12);
+  --shadow-band: 0 4px 10px 0 rgb(0 0 0 / 0.05);
+
+  --breakpoint-mobile: 30rem;
+  --breakpoint-tablet: 64rem;
+  --breakpoint-laptop: 80rem;
+  --breakpoint-desktop: 90rem;
+
+  --font-primary: 'Open Sans Variable', 'Open Sans Fallback', sans-serif;
+  --font-secondary: 'Lora Variable', 'Lora Fallback', serif;
+  --font-sans: var(--font-primary);
+  --font-serif: var(--font-secondary);
+
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --default-transition-duration: 300ms;
+  --default-transition-timing-function: var(--ease-out);
+
+  --animate-toast-in: toast-in 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateX(2rem);
+    }
+  }
+}
+
+/* Type styles, `ts-*`: one class sets family, size, line height and weight. */
+@utility ts-secondary-heading-s {
+  font-family: var(--font-secondary);
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.025rem;
+}
+@utility ts-primary-subheading-l {
+  font-family: var(--font-primary);
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.025rem;
+}
+@utility ts-primary-subheading-m {
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025rem;
+}
+@utility ts-primary-subheading-s {
+  font-family: var(--font-primary);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.025rem;
+}
+@utility ts-primary-subheading-xs {
+  font-family: var(--font-primary);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+@utility ts-primary-body-l {
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.025rem;
+}
+@utility ts-primary-body-m {
+  font-family: var(--font-primary);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 400;
+  letter-spacing: -0.025rem;
+}
+@utility ts-primary-body-s {
+  font-family: var(--font-primary);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 400;
+  letter-spacing: -0.025rem;
+}
+@utility ts-primary-button-l {
+  font-family: var(--font-primary);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.025rem;
+}
+@utility ts-primary-button-s {
+  font-family: var(--font-primary);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.025rem;
+}
+@utility ts-primary-caption {
+  font-family: var(--font-primary);
+  font-size: 0.625rem;
+  line-height: 0.75rem;
+  font-weight: 600;
+  letter-spacing: -0.025rem;
+  text-transform: uppercase;
+}
+
+/* Metric fallbacks: until a web font arrives, Arial and Georgia take its exact
+   space, so nothing moves when it swaps in. Liberation Sans has Arial's
+   metrics, for Linux machines without Arial. */
+@font-face {
+  font-family: 'Open Sans Fallback';
+  src: local('Arial'), local('Liberation Sans');
+  size-adjust: 95.1%;
+  ascent-override: 112.39%;
+  descent-override: 30.81%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Lora Fallback';
+  src: local('Georgia');
+  size-adjust: 95.26%;
+  ascent-override: 105.61%;
+  descent-override: 28.76%;
+  line-gap-override: 0%;
+}
+
+:root {
+  --z-header: 50;
+  --z-toast: 1000;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-surface-primary-cool-dark);
+    color: var(--color-text-primary-default);
+    font-family: var(--font-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* One focus ring for everything, rather than one per component. */
+  :focus-visible {
+    outline: 2px solid var(--color-stroke-primary-default);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
