@@ -2,6 +2,7 @@ import { expect, signUp, test } from './fixtures.ts';
 
 // No link may lead to a 404: a page that does not exist yet has no link to it.
 test('every link on every page leads somewhere', async ({ page, request }) => {
+  test.slow(); // every period's links, as a visitor and signed in
   const seen = new Set<string>();
   const check = async () => {
     const hrefs = await page
@@ -19,11 +20,21 @@ test('every link on every page leads somewhere', async ({ page, request }) => {
     }
   };
 
-  await page.goto('/sign-in');
-  await check();
-  await page.goto('/sign-up');
-  await check();
+  for (const path of [
+    '/',
+    '/?period=week',
+    '/?period=month',
+    '/plants',
+    '/history',
+    '/sign-in',
+    '/sign-up',
+  ]) {
+    await page.goto(path);
+    await check();
+  }
   await signUp(page);
+  await check();
+  await page.goto('/alerts/new');
   await check();
 
   const missing = await request.get('/no-such-page');

@@ -5,9 +5,10 @@ import { type Browser, chromium, expect, type Page } from '@playwright/test';
 
 /*
  * The README's screens, taken from the stack `docker compose up --wait --build`
- * started: `pnpm run screenshots`, or `pnpm run screenshots <name>…` for some.
- * They are taken as Ana, an account of the script's own at example.com, made
- * the first time and given the same five alerts every time.
+ * started, once the sync has loaded the ONS's files: `pnpm run screenshots`,
+ * or `pnpm run screenshots <name>…` for some. The data pages show the latest
+ * day published; the alert pages are taken as Ana, an account of the script's
+ * own at example.com, made the first time and given the same five alerts.
  */
 
 const base = process.env['E2E_BASE_URL'] ?? 'http://localhost:8090';
@@ -17,18 +18,18 @@ const LAPTOP = { width: 1440, height: 900 };
 const PHONE = { width: 390, height: 844 };
 const ANA = { email: 'ana@example.com', password: 'correct horse battery staple' };
 
-/** Where and what the grid curtails most, at thresholds of the right size. */
+/** Where and what the grid curtails most, at thresholds that some days pass and most do not. */
 const ALERTS = [
-  { name: 'Northeast wind', source: 'Wind', subsystem: 'Northeast', threshold: '12000' },
-  { name: 'Northeast solar', source: 'Solar', subsystem: 'Northeast', threshold: '4500' },
+  { name: 'Northeast wind', source: 'Wind', subsystem: 'Northeast', threshold: '150000' },
+  { name: 'Northeast solar', source: 'Solar', subsystem: 'Northeast', threshold: '50000' },
   {
     name: 'Southeast solar',
     source: 'Solar',
     subsystem: 'Southeast and Centre-West',
-    threshold: '1200',
+    threshold: '40000',
   },
-  { name: 'South wind', source: 'Wind', subsystem: 'South', threshold: '800' },
-  { name: 'North wind', source: 'Wind', subsystem: 'North', threshold: '300' },
+  { name: 'South wind', source: 'Wind', subsystem: 'South', threshold: '12000' },
+  { name: 'North wind', source: 'Wind', subsystem: 'North', threshold: '1500' },
 ] as const;
 
 async function open(browser: Browser, viewport = LAPTOP) {
@@ -58,52 +59,116 @@ async function signIn(page: Page) {
   await expect(list).toBeVisible();
 }
 
-/** Leaves Ana with the five alerts, or with none. */
+/** Fills the new alert form. */
+async function fill(
+  page: Page,
+  alert: { name: string; source: string; subsystem: string; threshold: string },
+) {
+  await page.getByLabel('Name').fill(alert.name);
+  await page.getByRole('radio', { name: alert.source }).check();
+  await page.getByLabel('Subsystem').selectOption({ label: alert.subsystem });
+  await page.getByLabel('Daily threshold').fill(alert.threshold);
+}
+
+/** Leaves Ana with the five alerts, or with none, on the alerts page. */
 async function alerts(page: Page, wanted: 'five' | 'none') {
-  const deletes = page.getByRole('button', { name: /^Delete “/ });
+  await page.goto('/alerts');
+  const yours = page.getByRole('table', { name: 'Your alerts, newest first' });
+  const deletes = yours.getByRole('button', { name: /^Delete “/ });
   // A button reads "Deleting…" until the list comes back without its alert.
-  const deleting = page.getByRole('button', { name: /^Deleting/ });
+  const deleting = yours.getByRole('button', { name: /^Deleting/ });
   for (let left = await deletes.count(); left > 0; left--) {
     await deletes.first().click();
-    await expect(deletes).toHaveCount(left - 1);
+    await expect(deletes).toHaveCount(left === 1 ? 0 : left - 1);
     await expect(deleting).toHaveCount(0);
   }
   if (wanted === 'none') return;
 
   // The list is newest first, so the last one made heads it.
   for (const alert of ALERTS.toReversed()) {
-    await page.getByLabel('Name').fill(alert.name);
-    await page.getByRole('radio', { name: alert.source }).check();
-    await page.getByLabel('Subsystem').selectOption({ label: alert.subsystem });
-    await page.getByLabel('Daily threshold').fill(alert.threshold);
+    await page.goto('/alerts/new');
+    await fill(page, alert);
     await page.getByRole('button', { name: 'Create Alert' }).click();
-    await expect(page.getByRole('row', { name: new RegExp(`^${alert.name} `) })).toBeVisible();
+    await expect(yours.getByRole('row', { name: new RegExp(`^${alert.name} `) })).toBeVisible();
   }
+  await page.reload(); // without the toast
 }
 
-/** Until the page holds still: fonts in, animations done, the pointer out of the way. */
-async function settle(page: Page) {
-  await page.mouse.move(page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0);
+/** Until the page holds still: fonts in, charts measured, animations done, the pointer away. */
+async function settle(page: Page, pointer = true) {
+  if (pointer) {
+    await page.mouse.move(page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0);
+  }
   await page.evaluate(async () => {
     await document.fonts.ready;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
     await Promise.allSettled(document.getAnimations().map((animation) => animation.finished));
   });
 }
 
 const screens: Record<string, (browser: Browser) => Promise<Page>> = {
+  async overview(browser) {
+    const { page } = await open(browser);
+    await page.goto('/');
+    return page;
+  },
+
+  async 'overview-month'(browser) {
+    const { page } = await open(browser);
+    await page.goto('/?period=month');
+    return page;
+  },
+
+  async 'overview-tooltip'(browser) {
+    const { page } = await open(browser);
+    await page.goto('/');
+    const chart = page.getByRole('img', { name: /^Energy curtailed in each half hour/ });
+    await chart.scrollIntoViewIfNeeded();
+    await settle(page);
+    const box = await chart.boundingBox();
+    if (box === null) throw new Error('The chart is not on the page.');
+    // Midday, when solar is held back most.
+    await page.mouse.move(box.x + box.width * 0.55, box.y + box.height * 0.6);
+    return page;
+  },
+
+  async 'overview-phone'(browser) {
+    const { page } = await open(browser, PHONE);
+    await page.goto('/');
+    return page;
+  },
+
+  async plants(browser) {
+    const { page } = await open(browser);
+    await page.goto('/plants?period=week');
+    return page;
+  },
+
+  async history(browser) {
+    const { page } = await open(browser);
+    await page.goto('/history');
+    return page;
+  },
+
   async alerts(browser) {
     const { page } = await open(browser);
     await signIn(page);
     await alerts(page, 'five');
-    await page.reload(); // without the toast
+    return page;
+  },
+
+  async 'alert-preview'(browser) {
+    const { page } = await open(browser);
+    await signIn(page);
+    await page.goto('/alerts/new');
+    await fill(page, { ...ALERTS[0], name: 'Northeast wind, the worst days' });
     return page;
   },
 
   async 'alert-refused'(browser) {
     const { page } = await open(browser);
     await signIn(page);
-    await alerts(page, 'five');
-    await page.reload();
+    await page.goto('/alerts/new');
     await page.getByRole('button', { name: 'Create Alert' }).click();
     await expect(page.getByRole('alert')).toBeFocused();
     return page;
@@ -113,10 +178,8 @@ const screens: Record<string, (browser: Browser) => Promise<Page>> = {
     const { page } = await open(browser);
     await signIn(page);
     await alerts(page, 'five');
-    await page.reload();
-    await page.getByLabel('Name').fill('NORTHEAST WIND');
-    await page.getByLabel('Subsystem').selectOption({ label: 'Northeast' });
-    await page.getByLabel('Daily threshold').fill('9000');
+    await page.goto('/alerts/new');
+    await fill(page, { ...ALERTS[0], name: 'NORTHEAST WIND', threshold: '120000' });
     await page.getByRole('button', { name: 'Create Alert' }).click();
     await expect(page.getByLabel('Name')).toHaveAccessibleDescription(
       'You already have an alert with this name',
@@ -136,8 +199,6 @@ const screens: Record<string, (browser: Browser) => Promise<Page>> = {
     const { page } = await open(browser, PHONE);
     await signIn(page);
     await alerts(page, 'five');
-    await page.reload();
-    await page.getByRole('heading', { name: 'Your Alerts' }).scrollIntoViewIfNeeded();
     return page;
   },
 
@@ -166,7 +227,8 @@ try {
   for (const [name, take] of Object.entries(screens)) {
     if (names.length > 0 && !names.includes(name)) continue;
     const page = await take(browser);
-    await settle(page);
+    // The tooltip shot keeps the pointer where it put it.
+    await settle(page, name !== 'overview-tooltip');
     await page.screenshot({ path: `${out}${name}.png` });
     await page.context().close();
     console.log(`docs/screenshots/${name}.png`);

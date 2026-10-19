@@ -7,6 +7,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests',
+  globalSetup: './global-setup.ts',
   fullyParallel: true,
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 1 : 0,
@@ -31,7 +32,7 @@ export default defineConfig({
     {
       name: 'mobile',
       use: { ...devices['Pixel 7'] },
-      testMatch: /alerts\.spec\.ts/,
+      testMatch: /(alerts|curtailment)\.spec\.ts/,
     },
   ],
 });
