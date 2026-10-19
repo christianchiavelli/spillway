@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { CircleAlert } from '@lucide/svelte';
+  import ErrorIcon from '~icons/material-symbols/error-outline-rounded';
 
   type Item = { href: string; text: string };
   type Props = {
@@ -24,7 +24,7 @@
   data-error-summary
   class="flex gap-400 rounded-300 border border-stroke-error bg-visual-light-red p-500"
 >
-  <CircleAlert size={20} class="mt-[0.125rem] shrink-0 text-text-semantic-error" />
+  <ErrorIcon width={20} height={20} class="mt-[0.125rem] shrink-0 text-text-semantic-error" />
   <div class="flex flex-col gap-200">
     <p class="ts-primary-subheading-s text-text-primary-default">{title}</p>
     {#if detail}
@@ -35,9 +35,10 @@
         {#each items as item (item.href)}
           <li>
             <!-- eslint-disable svelte/no-navigation-without-resolve -- a #fragment on this page, not a route -->
+            <!-- 24px tall, the least target WCAG 2.5.8 allows, since the links stack. -->
             <a
               href={item.href}
-              class="ts-primary-body-m text-text-semantic-error underline underline-offset-2 hover:no-underline"
+              class="inline-flex min-h-[1.5rem] items-center ts-primary-body-m text-text-semantic-error underline underline-offset-2 hover:no-underline"
             >
               {item.text}
             </a>

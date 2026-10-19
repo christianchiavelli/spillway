@@ -3,17 +3,12 @@
   import '@fontsource-variable/lora';
   import '../app.css';
 
-  import { setLucideProps } from '@lucide/svelte';
-
   import AppShell from '#lib/components/layout/AppShell.svelte';
   import Toaster, { type Toast } from '#lib/components/ui/Toaster.svelte';
 
   import type { LayoutProps } from './$types';
 
   let { data, children }: LayoutProps = $props();
-
-  // Thin strokes everywhere: a light icon weight suits a dense dashboard.
-  setLucideProps({ strokeWidth: 1.5 });
 
   let dismissed = $state<readonly string[]>([]);
 

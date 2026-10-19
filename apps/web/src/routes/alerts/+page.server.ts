@@ -1,54 +1,33 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import * as z from 'zod';
 
-import { zNewAlert } from '#lib/api/generated/zod.gen.ts';
-import { type AlertField, alertFields } from '#lib/features/alerts/alerts.ts';
-import { type FieldErrors, fromIssues, fromProblem } from '#lib/forms/errors.ts';
+import { readPage } from '#lib/features/curtailment/filters.ts';
 import { api } from '#lib/server/api.ts';
 import { setFlash } from '#lib/server/flash.ts';
-import { text, wholeNumber } from '#lib/server/forms.ts';
+import { text } from '#lib/server/forms.ts';
 import { requireSession, sessionLost } from '#lib/server/session.ts';
 
 import type { Actions, PageServerLoad } from './$types';
+
+/** Firings a page. */
+const FIRINGS = 10;
 
 // +page.server.ts, not +page.ts: the list needs the session token, which must
 // never reach the browser, and the API is not reachable from it anyway.
 export const load: PageServerLoad = async (event) => {
   requireSession(event);
-  const result = await api(event).listAlerts();
-  if (!result.ok) sessionLost(event);
-  return { alerts: result.data.items };
+  const page = readPage(event.url);
+  if (page === null) error(404, 'There is no such page of firings.');
+  const client = api(event);
+  const [alerts, firings] = await Promise.all([
+    client.listAlerts(),
+    client.listFirings({ limit: FIRINGS, offset: (page - 1) * FIRINGS }),
+  ]);
+  if (!alerts.ok || !firings.ok) sessionLost(event);
+  return { alerts: alerts.data.items, firings: firings.data, page, perPage: FIRINGS };
 };
 
 export const actions = {
-  create: async (event) => {
-    requireSession(event);
-    const form = await event.request.formData();
-    const input = {
-      name: text(form, 'name'),
-      source: text(form, 'source'),
-      subsystem: text(form, 'subsystem'),
-      thresholdMwh: wholeNumber(form, 'thresholdMwh'),
-    };
-    // Sent back as typed, so a failed submit loses nothing, "1,500" included.
-    const values = { ...input, thresholdMwh: text(form, 'thresholdMwh') };
-    const refuse = (status: number, errors: FieldErrors<AlertField>, full = false) =>
-      fail(status, { create: { values, errors, full } });
-
-    const parsed = zNewAlert.safeParse(input);
-    if (!parsed.success) return refuse(422, fromIssues(parsed.error.issues, alertFields, input));
-
-    const result = await api(event).createAlert(parsed.data);
-    if (!result.ok) {
-      if (result.status === 401) sessionLost(event);
-      if (result.problem.code === 'alert_limit_reached') return refuse(409, {}, true);
-      return refuse(result.status, fromProblem(result.problem, alertFields));
-    }
-
-    setFlash(event.cookies, event.url, { kind: 'alert-created', name: result.data.name });
-    redirect(303, '/alerts');
-  },
-
   delete: async (event) => {
     requireSession(event);
     const form = await event.request.formData();

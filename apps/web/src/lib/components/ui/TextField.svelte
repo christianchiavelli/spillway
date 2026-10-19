@@ -53,12 +53,17 @@
     >
       {label}{#if required}<span aria-hidden="true">&nbsp;*</span>{/if}
     </label>
+    <!--
+      defaultValue, not value: hydration sets a value property, and would wipe
+      what someone typed before the page's JavaScript arrived. A default value
+      only shows while the field is untouched.
+    -->
     <input
       {id}
       {name}
       {type}
       {required}
-      value={value ?? ''}
+      defaultValue={value ?? ''}
       aria-invalid={error === undefined ? undefined : true}
       aria-describedby={message === undefined ? undefined : messageId}
       class="h-full w-full min-w-0 rounded-200 bg-transparent px-300 ts-primary-body-l text-text-primary-default outline-none placeholder:text-text-primary-disabled"

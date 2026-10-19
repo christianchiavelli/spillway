@@ -1,6 +1,6 @@
 # 9. A dense dashboard look, with accessibility first
 
-- Status: accepted
+- Status: accepted; its icon choice replaced by [ADR 0019](0019-material-symbols-and-a-wordmark-drawn-from-the-data.md)
 - Date: 2026-10-17
 
 ## Context
@@ -13,7 +13,7 @@ Spillway is a tool for people who watch the grid: it should look like the analyt
 - **Open Sans for the interface, Lora for page titles**, self-hosted from Fontsource with metric-matched fallbacks: no third-party request and no shift when they load. Lucide icons, at a light stroke.
 - **Where the look and accessibility disagree, accessibility wins:**
   - Every field's label always shows, notched into its border. None doubles as a placeholder that leaves as you type.
-  - Choices are native controls: a `<select>` in the field's frame, and radio buttons under the segmented control, laid over each option. They post without JavaScript, and the platform gives them keyboard and screen reader support everywhere.
+  - Choices are native controls: a `<select>` in the field's frame, and radio buttons under the segmented control, laid over each option. They post without JavaScript, and the platform gives them keyboard and screen reader support everywhere. Where the browser lets CSS draw a select's list (`appearance: base-select`, Chromium 135 on), the list is drawn to match the fields, with a check by the chosen row; a browser without it shows its own.
   - One focus ring for every control.
   - A refused form opens with an error summary that takes focus and links to each field, as GOV.UK's design system does.
   - Toasts stay until they are closed: one that leaves on a timer can go before it is read.

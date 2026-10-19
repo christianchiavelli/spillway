@@ -29,7 +29,9 @@
         {title}
       </svelte:element>
       {#if description}
-        <p class="max-w-[60ch] ts-primary-body-m text-text-secondary-default">{description}</p>
+        <p class="max-w-[60ch] ts-primary-body-m text-pretty text-text-secondary-default">
+          {description}
+        </p>
       {/if}
     </div>
     {@render aside?.()}

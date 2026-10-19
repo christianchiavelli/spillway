@@ -1,9 +1,22 @@
-import { redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
+
+import { readPeriod } from '#lib/features/curtailment/periods.ts';
+import { api } from '#lib/server/api.ts';
+import { published } from '#lib/server/published.ts';
 
 import type { PageServerLoad } from './$types';
 
-// The overview of the grid will live here. Until it does, the front door opens
-// onto the one page that exists, instead of a page about pages to come.
-export const load: PageServerLoad = ({ locals }) => {
-  redirect(307, locals.session === null ? '/sign-in' : '/alerts');
+/** The plants the overview ranks; the plants page has them all. */
+const TOP_PLANTS = 8;
+
+// Public: the ONS's data is open, and the overview is the front door.
+export const load: PageServerLoad = async (event) => {
+  const query = readPeriod(event.url);
+  if (query === null) error(404, 'There is no such period.');
+  const client = api(event);
+  const [overview, plants] = await Promise.all([
+    client.curtailment(query),
+    client.listPlants({ ...query, limit: TOP_PLANTS }),
+  ]);
+  return { query, overview: published(overview), plants: published(plants) };
 };

@@ -3,7 +3,8 @@
 </script>
 
 <script lang="ts">
-  import { CircleCheck, X } from '@lucide/svelte';
+  import CheckCircle from '~icons/material-symbols/check-circle-outline-rounded';
+  import Close from '~icons/material-symbols/close-rounded';
 
   type Props = { toasts: readonly Toast[]; ondismiss: (id: string) => void };
 
@@ -14,19 +15,20 @@
   The toast, in its success tone. The region is always on the page, empty or
   not, because a screen reader only announces what is added to a live region
   that already exists. A toast stays until it is closed or the page changes:
-  one that leaves on a timer can go before it is read.
+  one that leaves on a timer can go before it is read. It sits at the bottom,
+  clear of the page header, where a page keeps its main action.
 -->
 <div
   role="status"
   aria-live="polite"
-  class="pointer-events-none fixed top-[5rem] right-600 z-(--z-toast) flex w-[min(24rem,calc(100vw-3rem))] flex-col gap-300"
+  class="pointer-events-none fixed right-600 bottom-600 z-(--z-toast) flex w-[min(24rem,calc(100vw-3rem))] flex-col gap-300"
 >
   {#each toasts as toast (toast.id)}
     <div
       class="pointer-events-auto flex min-h-[3.125rem] animate-toast-in items-start gap-500 rounded-300 border border-text-semantic-success bg-visual-light-green p-500 shadow-overlay"
     >
       <span class="flex size-700 shrink-0 items-center justify-center rounded-full bg-white">
-        <CircleCheck size={20} class="text-icon-success" />
+        <CheckCircle width={20} height={20} class="text-icon-success" />
       </span>
       <div class="flex min-w-0 flex-1 flex-col gap-100">
         <p class="ts-primary-subheading-s text-text-primary-default">{toast.title}</p>
@@ -41,7 +43,7 @@
           ondismiss(toast.id);
         }}
       >
-        <X size={16} />
+        <Close width={16} height={16} />
         <span class="sr-only">Dismiss “{toast.title}”</span>
       </button>
     </div>

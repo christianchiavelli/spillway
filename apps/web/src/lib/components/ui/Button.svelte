@@ -1,7 +1,6 @@
 <script lang="ts">
-  import type { LucideIcon } from '@lucide/svelte';
-
   import { type ButtonVariants, buttonStyles } from './button-styles.ts';
+  import type { Icon as IconComponent } from './icon.ts';
   import type { Snippet } from 'svelte';
   import type { HTMLButtonAttributes } from 'svelte/elements';
 
@@ -9,7 +8,7 @@
     ButtonVariants & {
       children: Snippet;
       /** Drawn before the label, at the size that goes with the button. */
-      icon?: LucideIcon | undefined;
+      icon?: IconComponent | undefined;
       class?: string | undefined;
     };
 
@@ -26,7 +25,7 @@
 
 <button {type} class={buttonStyles({ variant, size, class: className })} {...rest}>
   {#if Icon}
-    <Icon size={size === 'sm' ? 16 : 20} />
+    <Icon width={size === 'sm' ? 16 : 20} height={size === 'sm' ? 16 : 20} />
   {/if}
   {@render children()}
 </button>

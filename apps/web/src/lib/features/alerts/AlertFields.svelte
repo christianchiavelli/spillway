@@ -2,9 +2,10 @@
   import SegmentedControl from '#lib/components/ui/SegmentedControl.svelte';
   import SelectField from '#lib/components/ui/SelectField.svelte';
   import TextField from '#lib/components/ui/TextField.svelte';
+  import { sources, subsystems } from '#lib/features/curtailment/grid.ts';
   import type { FieldErrors } from '#lib/forms/errors.ts';
 
-  import { type AlertField, alertError, limits, sources, subsystems } from './alerts.ts';
+  import { type AlertField, alertError, limits } from './alerts.ts';
 
   type Props = {
     /** What was typed, sent back after a failed submit so nothing is lost. */
@@ -21,9 +22,20 @@
   technology and the keyboard; the form posts with novalidate, so the server
   checks and words every rule, with JavaScript or without.
 -->
-<div
-  class="grid gap-600 laptop:grid-cols-[minmax(0,2fr)_auto_minmax(0,1.4fr)_minmax(0,1fr)] laptop:items-start"
->
+<!--
+  One field under another, the source first: it is the first thing to choose,
+  and the form shares its row with the preview of what it would catch.
+-->
+<div class="flex flex-col gap-600">
+  <SegmentedControl
+    id="alert-source"
+    legend="Source"
+    name="source"
+    options={sources}
+    value={values.source ?? 'wind'}
+    required
+    error={alertError('source', errors.source)}
+  />
   <TextField
     id="alert-name"
     label="Name"
@@ -34,15 +46,6 @@
     autocomplete="off"
     error={alertError('name', errors.name)}
     hint="Unique among your alerts"
-  />
-  <SegmentedControl
-    id="alert-source"
-    legend="Source"
-    name="source"
-    options={sources}
-    value={values.source ?? 'wind'}
-    required
-    error={alertError('source', errors.source)}
   />
   <SelectField
     id="alert-subsystem"

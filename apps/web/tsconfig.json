@@ -5,7 +5,7 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
-    "types": ["$app/types", "node"]
+    "types": ["$app/types", "node", "unplugin-icons/types/svelte5"]
   },
   "include": ["src", "vite.config.ts", "openapi-ts.config.ts"],
   "exclude": ["src/lib/api/generated"]

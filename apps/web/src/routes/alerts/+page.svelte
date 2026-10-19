@@ -1,33 +1,27 @@
 <script lang="ts">
-  import { BellPlus } from '@lucide/svelte';
+  import NotificationAdd from '~icons/material-symbols/notification-add-outline-rounded';
 
-  import { enhance } from '$app/forms';
-  import Button from '#lib/components/ui/Button.svelte';
+  import { resolve } from '$app/paths';
+  import TurbinesArt from '#lib/components/art/TurbinesArt.svelte';
+  import { buttonStyles } from '#lib/components/ui/button-styles.ts';
   import Card from '#lib/components/ui/Card.svelte';
   import EmptyState from '#lib/components/ui/EmptyState.svelte';
   import ErrorSummary from '#lib/components/ui/ErrorSummary.svelte';
   import PageHeader from '#lib/components/ui/PageHeader.svelte';
-  import AlertFields from '#lib/features/alerts/AlertFields.svelte';
+  import Pager from '#lib/components/ui/Pager.svelte';
+  import { limits } from '#lib/features/alerts/alerts.ts';
   import AlertTable from '#lib/features/alerts/AlertTable.svelte';
-  import { alertError, alertFields, limits } from '#lib/features/alerts/alerts.ts';
-  import TurbinesArt from '#lib/features/alerts/TurbinesArt.svelte';
+  import FiringTable from '#lib/features/alerts/FiringTable.svelte';
+  import { dayAndMonth } from '#lib/features/curtailment/format.ts';
   import { enhanceForm } from '#lib/forms/enhance.ts';
 
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
 
-  // The page orchestrates: it owns the forms' actions and what a submit does.
-  // The components below only draw what they are given.
-  let creating = $state(false);
+  // The page owns the delete forms' action and what a submit does; the table
+  // only draws what it is given.
   let deleting = $state<string | null>(null);
-
-  const create = enhanceForm({
-    resetOnRedirect: true,
-    onpending: (pending) => {
-      creating = pending;
-    },
-  });
   const remove = enhanceForm({
     onpending: (pending) => {
       if (!pending) deleting = null;
@@ -39,19 +33,9 @@
     return remove(input);
   };
 
-  const full = $derived(data.alerts.length >= limits.perAccount);
-  const ids = {
-    name: 'alert-name',
-    source: 'alert-source',
-    subsystem: 'alert-subsystem',
-    thresholdMwh: 'alert-threshold',
-  } as const;
-  const problems = $derived(
-    alertFields.flatMap((field) => {
-      const text = alertError(field, form?.create?.errors[field]);
-      return text === undefined ? [] : [{ href: `#${ids[field]}`, text }];
-    }),
-  );
+  const pageOf = (n: number) => (n > 1 ? resolve(`/alerts?page=${n}`) : resolve('/alerts'));
+  const firstFiring = $derived((data.page - 1) * data.perPage + 1);
+  const lastFiring = $derived(firstFiring + data.firings.items.length - 1);
 </script>
 
 <svelte:head>
@@ -60,44 +44,17 @@
 
 <PageHeader
   title="Alerts"
-  description="An alert is a daily limit on the wind or solar energy the grid operator keeps from being generated in one subsystem."
-/>
+  description="An alert watches one source in one subsystem, and fires on each day its curtailed energy goes over the threshold. Spillway checks the ONS's files every hour."
+>
+  {#snippet actions()}
+    <a href={resolve('/alerts/new')} class={buttonStyles()}>
+      <NotificationAdd width={20} height={20} />
+      New Alert
+    </a>
+  {/snippet}
+</PageHeader>
 
 <div class="mx-auto flex max-w-[83.25rem] flex-col gap-600 px-600 py-700">
-  <Card
-    title="New Alert"
-    description="Choose a source and a subsystem to watch, and how much curtailed energy in one day is too much."
-  >
-    {#if full}
-      <ErrorSummary
-        title="You have {limits.perAccount} alerts, the most an account can keep"
-        detail="Delete one below to make room for another."
-      />
-    {:else if form?.create?.full}
-      <ErrorSummary
-        title="You have {limits.perAccount} alerts, the most an account can keep"
-        detail="Delete one to make room for another."
-      />
-    {:else if problems.length > 0}
-      <ErrorSummary title="Check the alert" items={problems} />
-    {/if}
-
-    <form
-      method="POST"
-      action="?/create"
-      novalidate
-      use:enhance={create}
-      class="flex flex-col gap-700 pt-300"
-    >
-      <AlertFields values={form?.create?.values} errors={form?.create?.errors} />
-      <div class="flex justify-end">
-        <Button type="submit" icon={BellPlus} disabled={full} aria-disabled={creating || undefined}>
-          {creating ? 'Creating Alert…' : 'Create Alert'}
-        </Button>
-      </div>
-    </form>
-  </Card>
-
   <Card title="Your Alerts" description="Newest first.">
     {#snippet aside()}
       <p class="ts-primary-body-m text-text-secondary-default">
@@ -106,21 +63,57 @@
       </p>
     {/snippet}
 
-    {#if form?.delete?.failed}
+    {#if form?.delete.failed}
       <ErrorSummary title="That alert could not be deleted" detail="Try again in a moment." />
     {/if}
 
     {#if data.alerts.length === 0}
       <EmptyState
         title="No alerts yet"
-        description="Create one above. It will show here, with its threshold and the day you made it."
+        description="Choose a source, a subsystem and a daily threshold, and see how often it would have fired before you save it."
       >
         {#snippet art()}
           <TurbinesArt />
         {/snippet}
+        <a href={resolve('/alerts/new')} class={buttonStyles({ variant: 'secondary' })}>
+          <NotificationAdd width={20} height={20} />
+          New Alert
+        </a>
       </EmptyState>
     {:else}
       <AlertTable alerts={data.alerts} {ondelete} {deleting} />
     {/if}
   </Card>
+
+  {#if data.alerts.length > 0}
+    <Card
+      title="When They Fired"
+      description={data.firings.from && data.firings.through
+        ? `From ${dayAndMonth(data.firings.from)} to ${dayAndMonth(data.firings.through)}, the last 30 days the ONS has published, newest first.`
+        : "The ONS's data is still loading."}
+    >
+      {#if data.firings.total === 0}
+        <p class="ts-primary-body-m text-text-secondary-default">
+          None of your alerts went over its threshold in these days.
+        </p>
+      {:else if data.firings.items.length === 0}
+        <p class="ts-primary-body-m text-text-secondary-default">
+          This page is past the end of the list.
+          <a href={pageOf(1)} class="text-text-primary-link hover:text-text-primary-link-hover"
+            >Go to the newest</a
+          >.
+        </p>
+      {:else}
+        <FiringTable firings={data.firings.items} />
+        <Pager
+          from={firstFiring}
+          to={lastFiring}
+          total={data.firings.total}
+          previous={data.page > 1 ? pageOf(data.page - 1) : null}
+          next={lastFiring < data.firings.total ? pageOf(data.page + 1) : null}
+          labels={{ previous: 'Newer', next: 'Older' }}
+        />
+      {/if}
+    </Card>
+  {/if}
 </div>

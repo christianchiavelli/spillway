@@ -4,11 +4,24 @@ import * as z from 'zod';
 import { API_URL } from '$app/env/private';
 import { createClient } from '#lib/api/generated/client/index.ts';
 import * as sdk from '#lib/api/generated/sdk.gen.ts';
-import type { Credentials, NewAccount, NewAlert, Problem } from '#lib/api/generated/types.gen.ts';
+import type {
+  Credentials,
+  GetCurtailmentData,
+  ListFiringsData,
+  ListPlantsData,
+  NewAccount,
+  NewAlert,
+  Problem,
+} from '#lib/api/generated/types.gen.ts';
 import {
   zAlert,
   zAlertList,
   zCurrentSession,
+  zCurtailment,
+  zDailyCurtailment,
+  zFiringPage,
+  zMonthlyCurtailment,
+  zPlantRanking,
   zProblem,
   zSessionGrant,
 } from '#lib/api/generated/zod.gen.ts';
@@ -75,8 +88,11 @@ export function api(event: RequestEvent, token: string | undefined = event.local
       return { ok: true, data: parsed.data };
     }
 
+    // A 503 that says the data is still loading is an answer, which the page
+    // words; any other failure on the API's side is not.
     const problem = zProblem.safeParse(failure);
-    if (response.status >= 500 || !problem.success) {
+    const loading = problem.success && problem.data.code === 'data_unavailable';
+    if ((response.status >= 500 && !loading) || !problem.success) {
       log.error('the API failed', { ...context, status: response.status, body: failure });
       error(503, 'Spillway cannot reach its data right now. Try again in a moment.');
     }
@@ -102,5 +118,19 @@ export function api(event: RequestEvent, token: string | undefined = event.local
     createAlert: (body: NewAlert) => call('createAlert', zAlert, sdk.createAlert({ client, body })),
     deleteAlert: (alertId: string) =>
       call('deleteAlert', zNoContent, sdk.deleteAlert({ client, path: { alertId } })),
+    listFirings: (query: ListFiringsData['query']) =>
+      call('listFirings', zFiringPage, sdk.listFirings({ client, query })),
+    curtailment: (query: GetCurtailmentData['query']) =>
+      call('getCurtailment', zCurtailment, sdk.getCurtailment({ client, query })),
+    listPlants: (query: ListPlantsData['query']) =>
+      call('listPlants', zPlantRanking, sdk.listPlants({ client, query })),
+    listMonths: () =>
+      call('listMonthlyCurtailment', zMonthlyCurtailment, sdk.listMonthlyCurtailment({ client })),
+    listRecentDays: (days: number) =>
+      call(
+        'listDailyCurtailment',
+        zDailyCurtailment,
+        sdk.listDailyCurtailment({ client, query: { days } }),
+      ),
   };
 }

@@ -2,18 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import type { Alert } from '#lib/api/generated/types.gen.ts';
+import type { WatchedAlert } from '#lib/api/generated/types.gen.ts';
 
 import AlertTable from './AlertTable.svelte';
 
-const alerts: Alert[] = [
+const alerts: WatchedAlert[] = [
   {
     id: '019a3b6e-0000-7000-8000-000000000002',
     name: 'Solar in the Northeast',
     source: 'solar',
     subsystem: 'NE',
     thresholdMwh: 12_500,
-    createdAt: '2026-10-17T02:30:00Z', // Oct 16 in Brasília
+    createdAt: '2026-10-17T02:30:00Z',
+    lastFiredOn: '2026-10-11',
+    daysFired: 7,
   },
   {
     id: '019a3b6e-0000-7000-8000-000000000001',
@@ -22,6 +24,7 @@ const alerts: Alert[] = [
     subsystem: 'S',
     thresholdMwh: 800,
     createdAt: '2026-10-15T12:00:00Z',
+    daysFired: 0,
   },
 ];
 
@@ -43,8 +46,13 @@ describe('AlertTable', () => {
     const first = page.getByRole('row').nth(1);
     await expect.element(first).toMatchTextContent('12,500 MWh');
     await expect.element(first).toMatchTextContent('Northeast');
-    // The day is Brasília's, the grid's, wherever the browser is.
-    await expect.element(first).toMatchTextContent('Oct 16, 2026');
+    // A day of the ONS's calendar, written as the date it is, in any zone.
+    await expect.element(first).toMatchTextContent('Oct 11, 2026');
+    await expect.element(first).toMatchTextContent('7 days');
+
+    const quiet = page.getByRole('row').nth(2);
+    await expect.element(quiet).toMatchTextContent('Never');
+    await expect.element(quiet).toMatchTextContent('None');
   });
 
   it('gives every delete button the name of what it deletes', async () => {

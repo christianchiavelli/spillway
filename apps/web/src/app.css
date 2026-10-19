@@ -62,6 +62,7 @@
   --color-yellow-50: #fcf8d9;
   --color-yellow-200: #eeaf00;
   --color-yellow-400: #b05223;
+  --color-amber-300: #d97706;
 
   /* Text */
   --color-text-primary-default: var(--color-blue-500);
@@ -115,6 +116,15 @@
   --color-visual-light-neutral: var(--color-grey-50);
   --color-visual-light-turquoise: var(--color-turquoise-50);
   --color-visual-dark-turquoise: var(--color-turquoise-400);
+
+  /* Charts. Wind is the blue of the sky the turbines stand in, solar the amber
+     of the midday sun: both clear 3:1 on white, and they stay apart for the
+     common kinds of colour blindness. */
+  --color-chart-wind: var(--color-blue-200);
+  --color-chart-solar: var(--color-amber-300);
+  --color-chart-grid: var(--color-cool-grey-50);
+  --color-chart-axis: var(--color-grey-150);
+  --color-chart-muted: var(--color-grey-100);
 
   /* Spacing: 2px to 72px */
   --spacing-0: 0;
@@ -279,6 +289,9 @@
     color: var(--color-text-primary-default);
     font-family: var(--font-primary);
     -webkit-font-smoothing: antialiased;
+    /* A link to a field, such as one in an error summary, scrolls it into view
+       below the sticky header, not under it (WCAG 2.4.11). */
+    scroll-padding-top: 4.5rem;
   }
 
   /* One focus ring for everything, rather than one per component. */
@@ -293,6 +306,89 @@
     ::after {
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* A select stays the native element, so the keyboard, screen readers and a
+   form posted without JavaScript work as for any other. Where the browser lets
+   CSS draw its list (appearance: base-select, Chromium 135 on), the list
+   matches the fields; elsewhere it is the platform's own, and the closed
+   select looks the same either way. */
+@layer components {
+  .select-menu {
+    appearance: none;
+  }
+
+  @supports (appearance: base-select) {
+    .select-menu,
+    .select-menu::picker(select) {
+      appearance: base-select;
+    }
+    .select-menu {
+      display: flex;
+      align-items: center;
+    }
+
+    /* The field draws its own arrow, which turns over while the list is open. */
+    .select-menu::picker-icon {
+      display: none;
+    }
+    .select-menu + svg {
+      transition: rotate 150ms;
+    }
+    .select-menu:open + svg {
+      rotate: 180deg;
+    }
+
+    /* Just below the field's border, and as wide as the field. Below whenever
+       it fits: the browser's own order picks the side with more room, which
+       opens a field low on the screen upwards for no reason. */
+    .select-menu::picker(select) {
+      position-try-order: normal;
+      margin-block: calc(var(--spacing-200) + 1px);
+      margin-inline: -1px;
+      min-inline-size: calc(anchor-size(self-inline) + 2px);
+      padding-block: var(--spacing-200);
+      border: 1px solid var(--color-stroke-neutral-default);
+      border-radius: var(--radius-200);
+      background-color: var(--color-surface-container-primary);
+      box-shadow: var(--shadow-overlay);
+      color: var(--color-text-primary-default);
+    }
+
+    .select-menu option {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-300);
+      padding: 0.625rem var(--spacing-500);
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      letter-spacing: -0.025rem;
+      cursor: pointer;
+    }
+    .select-menu option:hover {
+      background-color: var(--color-surface-container-secondary);
+    }
+    /* The one focus ring, drawn inside the row so the list does not clip it. */
+    .select-menu option:focus-visible {
+      outline-offset: -2px;
+    }
+    /* A placeholder is a prompt in the field, not a choice in the list. */
+    .select-menu option[value='']:disabled {
+      display: none;
+    }
+
+    /* Material Symbols' check, at the end of the chosen row. */
+    .select-menu option::checkmark {
+      order: 1;
+      margin-inline-start: auto;
+      content: '';
+      inline-size: 1.25rem;
+      block-size: 1.25rem;
+      background-color: var(--color-icon-primary);
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9.55 15.15l8.475-8.475q.3-.3.7-.3t.7.3t.3.713t-.3.712l-9.175 9.2q-.3.3-.7.3t-.7-.3L4.55 13q-.3-.3-.288-.712t.313-.713t.713-.3t.712.3z'/%3E%3C/svg%3E")
+        center / contain no-repeat;
     }
   }
 }

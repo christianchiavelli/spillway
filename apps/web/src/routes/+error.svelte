@@ -3,7 +3,7 @@
   import { page } from '$app/state';
   import { buttonStyles } from '#lib/components/ui/button-styles.ts';
   import EmptyState from '#lib/components/ui/EmptyState.svelte';
-  import TurbinesArt from '#lib/features/alerts/TurbinesArt.svelte';
+  import TurbinesArt from '#lib/components/art/TurbinesArt.svelte';
 
   const notFound = $derived(page.status === 404);
   const title = $derived(notFound ? 'This page does not exist' : 'Something went wrong');

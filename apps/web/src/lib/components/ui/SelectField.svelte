@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChevronDown } from '@lucide/svelte';
+  import ArrowDown from '~icons/material-symbols/keyboard-arrow-down-rounded';
   import type { HTMLSelectAttributes } from 'svelte/elements';
 
   type Option = { value: string; label: string };
@@ -61,7 +61,7 @@
       {required}
       aria-invalid={error === undefined ? undefined : true}
       aria-describedby={message === undefined ? undefined : messageId}
-      class="h-full w-full min-w-0 cursor-pointer appearance-none rounded-200 bg-transparent pr-800 pl-300 ts-primary-body-l text-text-primary-default outline-none"
+      class="select-menu h-full w-full min-w-0 cursor-pointer rounded-200 bg-transparent pr-800 pl-300 ts-primary-body-l text-text-primary-default outline-none"
       {...rest}
     >
       <option value="" disabled selected={value === ''}>{placeholder}</option>
@@ -69,7 +69,11 @@
         <option value={option.value} selected={value === option.value}>{option.label}</option>
       {/each}
     </select>
-    <ChevronDown size={16} class="pointer-events-none absolute right-300 text-icon-secondary" />
+    <ArrowDown
+      width={16}
+      height={16}
+      class="pointer-events-none absolute right-300 text-icon-secondary"
+    />
   </div>
   {#if message !== undefined}
     <p

@@ -1,6 +1,7 @@
 import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
+import icons from 'unplugin-icons/vite';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig } from 'vitest/config';
 
@@ -50,7 +51,20 @@ export default defineConfig(({ command }) => ({
         },
       },
     }),
+    // Material Symbols, each one compiled into a Svelte component at build
+    // time: inline SVG, no runtime and no style attribute. They sit next to a
+    // label wherever they appear, so a screen reader skips them.
+    icons({
+      compiler: 'svelte',
+      scale: 1,
+      iconCustomizer: (_collection, _icon, props) => {
+        props['aria-hidden'] = 'true';
+      },
+    }),
   ],
+  // Bundled before the browser tests start: found halfway through a run, a new
+  // dependency reloads the page under the tests, and every one of them fails.
+  optimizeDeps: { include: ['d3-scale', 'd3-shape'] },
   test: {
     expect: { requireAssertions: true },
     projects: [
