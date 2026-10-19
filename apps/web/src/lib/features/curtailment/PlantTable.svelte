@@ -23,8 +23,11 @@
   const limited = (minutes: number) =>
     minutes < 60 ? `${int(minutes)} min` : `${int(minutes / 60)} h`;
 
-  // On a phone a row is the plant and what it lost; the rest is from mobile up.
+  // On a phone a row is the plant and what it lost; the rest is from mobile up,
+  // but the subsystem, the longest name, from laptop up: below it the table
+  // would scroll sideways on a tablet, and the state already says the region.
   const wide = 'hidden mobile:table-cell';
+  const widest = 'hidden laptop:table-cell';
 </script>
 
 <Table
@@ -33,13 +36,13 @@
     { label: '#', class: wide },
     { label: 'Plant' },
     { label: 'State', class: wide },
-    ...(full ? [{ label: 'Subsystem', class: wide }] : []),
+    ...(full ? [{ label: 'Subsystem', class: widest }] : []),
     { label: 'Source', class: wide },
     { label: 'Curtailed', right: true },
     { label: 'Share of Its Potential', right: true, class: wide },
     ...(full ? [{ label: 'Time Limited', right: true, class: wide }] : []),
   ]}
-  minWidth={full ? 'mobile:min-w-[60rem]' : 'mobile:min-w-[44rem]'}
+  minWidth={full ? 'mobile:min-w-[48rem] laptop:min-w-[60rem]' : 'mobile:min-w-[44rem]'}
 >
   {#each plants as plant, i (plant.id)}
     {@const source = sourceOf(plant.source)}
@@ -55,7 +58,8 @@
       </th>
       <td class={['px-300', wide]}>{plant.state}</td>
       {#if full}
-        <td class={['px-300', wide]}>{subsystemLabel(plant.subsystem)}</td>
+        <!-- Never broken at Centre-West's hyphen. -->
+        <td class={['px-300 whitespace-nowrap', widest]}>{subsystemLabel(plant.subsystem)}</td>
       {/if}
       <td class={['px-300', wide]}>
         <span class="inline-flex items-center gap-200">
