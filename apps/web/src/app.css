@@ -392,3 +392,24 @@
     }
   }
 }
+
+/* The toasts sit 1.5rem under the page header's band, where they cover none of
+   the page's own actions, and never higher than 1.5rem under the app header,
+   for a page with no band or one already scrolled past it. anchor() reads
+   where the band ends when the toasts are laid out, and they stay there while
+   the page scrolls: the band is a named anchor, not the default one
+   (position-anchor), which would carry them off the screen with it. */
+@layer components {
+  .toast-region {
+    top: calc(3.5rem + var(--spacing-600));
+  }
+
+  @supports (anchor-name: --a) {
+    .toast-region {
+      top: max(
+        calc(anchor(--page-header bottom, 3.5rem) + var(--spacing-600)),
+        calc(3.5rem + var(--spacing-600))
+      );
+    }
+  }
+}

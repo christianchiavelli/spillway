@@ -1,6 +1,6 @@
 # 9. A dense dashboard look, with accessibility first
 
-- Status: accepted; its icon choice replaced by [ADR 0019](0019-material-symbols-and-a-wordmark-drawn-from-the-data.md)
+- Status: accepted; its icon choice replaced by [ADR 0019](0019-material-symbols-and-a-wordmark-drawn-from-the-data.md), and its rule for toasts by [ADR 0023](0023-toasts-under-the-page-header-leave-on-their-own.md)
 - Date: 2026-10-17
 
 ## Context

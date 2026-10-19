@@ -26,3 +26,4 @@ One file per decision that had a trade-off, version pins included. Each says wha
 | [0020](0020-the-ons-data-is-synced-by-a-process-of-its-own.md) | The ONS's data is synced by a process of its own |
 | [0021](0021-firings-are-read-from-the-data.md) | Firings are read from the data, not recorded |
 | [0022](0022-charts-drawn-in-our-own-svg.md) | Charts drawn in our own SVG |
+| [0023](0023-toasts-under-the-page-header-leave-on-their-own.md) | Toasts under the page header, leaving on their own |

@@ -10,8 +10,13 @@
   let { title, description, actions }: Props = $props();
 </script>
 
-<!-- The page header: a white band with the page title in Lora. -->
-<header class="border-b border-stroke-neutral-default bg-surface-container-primary">
+<!--
+  The page header: a white band with the page title in Lora. It is the anchor
+  the toasts are placed under, so they never cover the page's own actions.
+-->
+<header
+  class="border-b border-stroke-neutral-default bg-surface-container-primary [anchor-name:--page-header]"
+>
   <div
     class="mx-auto flex max-w-[83.25rem] flex-wrap items-center justify-between gap-500 px-600 py-500"
   >
