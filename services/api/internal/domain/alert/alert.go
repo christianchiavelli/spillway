@@ -12,6 +12,7 @@ import (
 	"uuid"
 
 	"github.com/christianchiavelli/spillway/services/api/internal/domain"
+	"github.com/christianchiavelli/spillway/services/api/internal/domain/curtailment"
 )
 
 // The limits of an alert. The API contract states the same numbers, and a test
@@ -39,26 +40,9 @@ var ErrLimitReached = fmt.Errorf("an account holds at most %d alerts: %w", MaxPe
 // ignoring case.
 var ErrNameTaken error = &domain.ConflictError{Field: FieldName, Code: domain.CodeTaken}
 
-// Source is where the curtailed energy would have come from.
-type Source string
-
-// The sources the ONS curtails and publishes.
-const (
-	Wind  Source = "wind"
-	Solar Source = "solar"
-)
-
-// Subsystem is one of the four parts of Brazil's interconnected grid, coded as
-// the ONS codes them in its open data.
-type Subsystem string
-
-// The four subsystems.
-const (
-	North     Subsystem = "N"
-	Northeast Subsystem = "NE"
-	Southeast Subsystem = "SE" // the ONS joins the Centre-West to the Southeast
-	South     Subsystem = "S"
-)
+// RecentDays is how far back an alert's activity is counted: the days up to
+// the latest the ONS has published.
+const RecentDays = 30
 
 // Alert is a rule someone keeps: tell me when curtailment in a subsystem goes
 // past a threshold in one day.
@@ -66,8 +50,8 @@ type Alert struct {
 	ID           uuid.UUID
 	AccountID    uuid.UUID
 	Name         string
-	Source       Source
-	Subsystem    Subsystem
+	Source       curtailment.Source
+	Subsystem    curtailment.Subsystem
 	ThresholdMWh int32
 	CreatedAt    time.Time
 }
@@ -95,15 +79,13 @@ func New(id, accountID uuid.UUID, d Draft, now time.Time) (Alert, error) {
 		vs.Add(FieldName, domain.CodeInvalid)
 	}
 
-	source := Source(d.Source)
-	if source != Wind && source != Solar {
+	source := curtailment.Source(d.Source)
+	if !source.Valid() {
 		vs.Add(FieldSource, domain.CodeInvalid)
 	}
 
-	subsystem := Subsystem(d.Subsystem)
-	switch subsystem {
-	case North, Northeast, Southeast, South:
-	default:
+	subsystem := curtailment.Subsystem(d.Subsystem)
+	if !subsystem.Valid() {
 		vs.Add(FieldSubsystem, domain.CodeInvalid)
 	}
 
@@ -123,4 +105,22 @@ func New(id, accountID uuid.UUID, d Draft, now time.Time) (Alert, error) {
 		ThresholdMWh: d.ThresholdMWh,
 		CreatedAt:    now.UTC().Truncate(time.Microsecond), // what Postgres keeps
 	}, nil
+}
+
+// Activity is what an alert's threshold met in the data.
+type Activity struct {
+	LastFiredOn time.Time // the latest day it fired, or zero if it never has
+	DaysFired   int       // the days it fired in the RecentDays to the latest published
+}
+
+// Firing is a day an alert's source and subsystem lost more than its
+// threshold: as much as the threshold does not set it off. Firings are read
+// from the data, not recorded as they happen, so a day the ONS revises can gain
+// or lose one (ADR 0021).
+type Firing struct {
+	AlertID      uuid.UUID
+	AlertName    string
+	Day          time.Time
+	CurtailedMWh float64
+	ThresholdMWh int32
 }

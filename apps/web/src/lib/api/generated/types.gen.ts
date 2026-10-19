@@ -81,8 +81,248 @@ export type Alert = {
   createdAt: string;
 };
 
+/**
+ * An alert, with what its threshold met in the data
+ */
+export type WatchedAlert = Alert & {
+  /**
+   * The latest day it fired. Left out if it never has.
+   */
+  lastFiredOn?: Day;
+  /**
+   * The days it fired in the 30 up to the latest published
+   */
+  daysFired: number;
+};
+
 export type AlertList = {
-  items: Array<Alert>;
+  items: Array<WatchedAlert>;
+};
+
+/**
+ * A day an alert's source, in its subsystem, lost more than its threshold
+ */
+export type Firing = {
+  alertId: string;
+  alertName: AlertName;
+  day: Day;
+  curtailedMwh: Energy;
+  thresholdMwh: Threshold;
+};
+
+export type FiringPage = {
+  /**
+   * The first day the firings cover. Left out before any data is loaded.
+   */
+  from?: Day;
+  /**
+   * The last day the firings cover, the latest published
+   */
+  through?: Day;
+  /**
+   * The firings in all the days, on every page
+   */
+  total: number;
+  items: Array<Firing>;
+};
+
+/**
+ * A calendar day in Brasília
+ */
+export type Day = string;
+
+/**
+ * Energy in MWh
+ */
+export type Energy = number;
+
+/**
+ * `day`, `week`, from Monday to Sunday, or `month`, a calendar month.
+ * The day when left out.
+ *
+ */
+export type PeriodKind = 'day' | 'week' | 'month';
+
+/**
+ * A day, a week or a month, read up to the latest day published, and the
+ * span before it that it is compared with: as many days of the period
+ * before as this one has, so a week so far is compared with the same days
+ * of the week before.
+ *
+ */
+export type Period = {
+  kind: PeriodKind;
+  start: Day;
+  /**
+   * The last day, which may not be published yet
+   */
+  end: Day;
+  /**
+   * The last day with data, `end` or the latest published
+   */
+  through: Day;
+  /**
+   * The first day compared with. Left out where the data does not reach.
+   */
+  previousStart?: Day;
+  previousEnd?: Day;
+  /**
+   * A day of the period before. Left out where the data does not reach.
+   */
+  earlier?: Day;
+  /**
+   * A day of the period after. Left out until it is published.
+   */
+  later?: Day;
+};
+
+/**
+ * Why the ONS limited a plant, as it codes it: `ENE` the plants could
+ * make more than the grid was using, `CNF` held back to keep the grid
+ * reliable, `REL` equipment outside the plant, mostly transmission, could
+ * not carry it, `PAR` a limit set in the plant's terms of connection.
+ *
+ */
+export type Reason = 'ENE' | 'CNF' | 'REL' | 'PAR';
+
+/**
+ * What a source generated, and what the ONS kept it from generating
+ */
+export type SourceEnergy = {
+  curtailedMwh: Energy;
+  generatedMwh: Energy;
+};
+
+/**
+ * A half hour or a day, and what each source lost in it
+ */
+export type Slot = {
+  start: string;
+  windMwh: Energy;
+  solarMwh: Energy;
+};
+
+export type SubsystemSplit = {
+  subsystem: Subsystem;
+  windMwh: Energy;
+  solarMwh: Energy;
+};
+
+export type ReasonSplit = {
+  reason: Reason;
+  windMwh: Energy;
+  solarMwh: Energy;
+};
+
+export type Curtailment = {
+  period: Period;
+  /**
+   * The start of the last half hour published
+   */
+  publishedThrough: string;
+  wind: SourceEnergy;
+  solar: SourceEnergy;
+  /**
+   * What both sources lost in the span compared with, when the period has one
+   */
+  previousCurtailedMwh?: Energy;
+  /**
+   * The plants that lost energy in the period
+   */
+  plantsLimited: number;
+  /**
+   * The plants that reported in the period
+   */
+  plantsReporting: number;
+  /**
+   * The half hours of a day, or the days of a week or a month, from the
+   * first to the latest published
+   *
+   */
+  series: Array<Slot>;
+  /**
+   * All four subsystems
+   */
+  bySubsystem: Array<SubsystemSplit>;
+  /**
+   * The reasons the ONS gave in the period
+   */
+  byReason: Array<ReasonSplit>;
+};
+
+/**
+ * A plant's period
+ */
+export type PlantCurtailment = {
+  /**
+   * The ONS's id for the plant or group
+   */
+  id: string;
+  name: string;
+  /**
+   * The two letters of a Brazilian state
+   */
+  state: string;
+  subsystem: Subsystem;
+  source: Source;
+  curtailedMwh: Energy;
+  generatedMwh: Energy;
+  /**
+   * The minutes the ONS held it under a limit, at most a month's
+   */
+  limitedMinutes: number;
+};
+
+export type PlantRanking = {
+  period: Period;
+  publishedThrough: string;
+  /**
+   * The plants that reported in the period
+   */
+  reporting: number;
+  /**
+   * The plants that lost energy, on every page
+   */
+  total: number;
+  items: Array<PlantCurtailment>;
+};
+
+export type MonthCurtailment = {
+  /**
+   * The month's first day
+   */
+  month: Day;
+  /**
+   * Left out before the ONS published the source
+   */
+  wind?: SourceEnergy;
+  /**
+   * Left out before the ONS published the source
+   */
+  solar?: SourceEnergy;
+};
+
+export type MonthlyCurtailment = {
+  publishedThrough: string;
+  months: Array<MonthCurtailment>;
+};
+
+export type SubsystemDays = {
+  source: Source;
+  subsystem: Subsystem;
+  /**
+   * One figure a day, the oldest first
+   */
+  curtailedMwh: Array<Energy>;
+};
+
+export type DailyCurtailment = {
+  from: Day;
+  to: Day;
+  /**
+   * Every source and subsystem
+   */
+  series: Array<SubsystemDays>;
 };
 
 /**
@@ -103,6 +343,7 @@ export type ProblemCode =
   | 'request_too_large'
   | 'unsupported_media_type'
   | 'rate_limited'
+  | 'data_unavailable'
   | 'internal';
 
 export type FieldError = {
@@ -129,6 +370,21 @@ export type Problem = {
   code: ProblemCode;
   errors?: Array<FieldError>;
 };
+
+/**
+ * How long the period runs
+ */
+export type Period2 = PeriodKind;
+
+/**
+ * A day in the period. The latest day published when left out.
+ */
+export type Date = Day;
+
+/**
+ * How many items to skip
+ */
+export type Offset = number;
 
 export type CreateAccountData = {
   body: NewAccount;
@@ -267,7 +523,7 @@ export type ListAlertsError = ListAlertsErrors[keyof ListAlertsErrors];
 
 export type ListAlertsResponses = {
   /**
-   * Every alert of the account
+   * Every alert of the account, with what its threshold met in the data
    */
   200: AlertList;
   /**
@@ -307,6 +563,41 @@ export type CreateAlertResponses = {
 
 export type CreateAlertResponse = CreateAlertResponses[keyof CreateAlertResponses];
 
+export type ListFiringsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    limit?: number;
+    /**
+     * How many items to skip
+     */
+    offset?: number;
+  };
+  url: '/v1/alerts/firings';
+};
+
+export type ListFiringsErrors = {
+  /**
+   * Anything other than success, as an RFC 9457 problem
+   */
+  default: Problem;
+};
+
+export type ListFiringsError = ListFiringsErrors[keyof ListFiringsErrors];
+
+export type ListFiringsResponses = {
+  /**
+   * One page of firings
+   */
+  200: FiringPage;
+  /**
+   * Anything other than success, as an RFC 9457 problem
+   */
+  default: Problem;
+};
+
+export type ListFiringsResponse = ListFiringsResponses[keyof ListFiringsResponses];
+
 export type DeleteAlertData = {
   body?: never;
   path: {
@@ -337,3 +628,150 @@ export type DeleteAlertResponses = {
 };
 
 export type DeleteAlertResponse = DeleteAlertResponses[keyof DeleteAlertResponses];
+
+export type GetCurtailmentData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * How long the period runs
+     */
+    period?: PeriodKind;
+    /**
+     * A day in the period. The latest day published when left out.
+     */
+    date?: Day;
+  };
+  url: '/v1/curtailment';
+};
+
+export type GetCurtailmentErrors = {
+  /**
+   * Anything other than success, as an RFC 9457 problem
+   */
+  default: Problem;
+};
+
+export type GetCurtailmentError = GetCurtailmentErrors[keyof GetCurtailmentErrors];
+
+export type GetCurtailmentResponses = {
+  /**
+   * The period's curtailment
+   */
+  200: Curtailment;
+  /**
+   * Anything other than success, as an RFC 9457 problem
+   */
+  default: Problem;
+};
+
+export type GetCurtailmentResponse = GetCurtailmentResponses[keyof GetCurtailmentResponses];
+
+export type ListMonthlyCurtailmentData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/v1/curtailment/months';
+};
+
+export type ListMonthlyCurtailmentErrors = {
+  /**
+   * Anything other than success, as an RFC 9457 problem
+   */
+  default: Problem;
+};
+
+export type ListMonthlyCurtailmentError =
+  ListMonthlyCurtailmentErrors[keyof ListMonthlyCurtailmentErrors];
+
+export type ListMonthlyCurtailmentResponses = {
+  /**
+   * Every month, the whole grid
+   */
+  200: MonthlyCurtailment;
+  /**
+   * Anything other than success, as an RFC 9457 problem
+   */
+  default: Problem;
+};
+
+export type ListMonthlyCurtailmentResponse =
+  ListMonthlyCurtailmentResponses[keyof ListMonthlyCurtailmentResponses];
+
+export type ListDailyCurtailmentData = {
+  body?: never;
+  path?: never;
+  query?: {
+    days?: number;
+  };
+  url: '/v1/curtailment/days';
+};
+
+export type ListDailyCurtailmentErrors = {
+  /**
+   * Anything other than success, as an RFC 9457 problem
+   */
+  default: Problem;
+};
+
+export type ListDailyCurtailmentError =
+  ListDailyCurtailmentErrors[keyof ListDailyCurtailmentErrors];
+
+export type ListDailyCurtailmentResponses = {
+  /**
+   * The latest days
+   */
+  200: DailyCurtailment;
+  /**
+   * Anything other than success, as an RFC 9457 problem
+   */
+  default: Problem;
+};
+
+export type ListDailyCurtailmentResponse =
+  ListDailyCurtailmentResponses[keyof ListDailyCurtailmentResponses];
+
+export type ListPlantsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * How long the period runs
+     */
+    period?: PeriodKind;
+    /**
+     * A day in the period. The latest day published when left out.
+     */
+    date?: Day;
+    source?: Source;
+    subsystem?: Subsystem;
+    limit?: number;
+    /**
+     * How many items to skip
+     */
+    offset?: number;
+  };
+  url: '/v1/plants';
+};
+
+export type ListPlantsErrors = {
+  /**
+   * Anything other than success, as an RFC 9457 problem
+   */
+  default: Problem;
+};
+
+export type ListPlantsError = ListPlantsErrors[keyof ListPlantsErrors];
+
+export type ListPlantsResponses = {
+  /**
+   * One page of the plants
+   */
+  200: PlantRanking;
+  /**
+   * Anything other than success, as an RFC 9457 problem
+   */
+  default: Problem;
+};
+
+export type ListPlantsResponse = ListPlantsResponses[keyof ListPlantsResponses];

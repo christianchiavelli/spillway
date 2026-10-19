@@ -1,7 +1,9 @@
-// Command api is Spillway's API server. One binary does three jobs, so the
+// Command api is Spillway's API server. One binary does four jobs, so the
 // image needs no shell:
 //
 //	api serve        serve the API, and health and metrics on the admin port
+//	api sync         load the ONS's new and revised files, now and every
+//	                 SYNC_INTERVAL, with health and metrics on the admin port
 //	api migrate      apply the database migrations, then exit
 //	api healthcheck  exit 0 when this host's server is ready, for HEALTHCHECK
 //
@@ -23,10 +25,13 @@ import (
 
 	"github.com/christianchiavelli/spillway/services/api/internal/adapter/argon2id"
 	"github.com/christianchiavelli/spillway/services/api/internal/adapter/httpapi"
+	"github.com/christianchiavelli/spillway/services/api/internal/adapter/ons"
 	"github.com/christianchiavelli/spillway/services/api/internal/adapter/postgres"
 	"github.com/christianchiavelli/spillway/services/api/internal/adapter/ratelimit"
 	"github.com/christianchiavelli/spillway/services/api/internal/app/alerting"
 	"github.com/christianchiavelli/spillway/services/api/internal/app/identity"
+	"github.com/christianchiavelli/spillway/services/api/internal/app/ingest"
+	"github.com/christianchiavelli/spillway/services/api/internal/app/reports"
 	"github.com/christianchiavelli/spillway/services/api/internal/platform/config"
 	"github.com/christianchiavelli/spillway/services/api/internal/platform/health"
 	"github.com/christianchiavelli/spillway/services/api/internal/platform/httpserver"
@@ -55,12 +60,14 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout 
 	switch command {
 	case "serve":
 		return serve(ctx, getenv, stdout)
+	case "sync":
+		return syncData(ctx, getenv, stdout)
 	case "migrate":
 		return migrate(ctx, getenv, stdout)
 	case "healthcheck":
 		return healthcheck(ctx, getenv)
 	default:
-		return fmt.Errorf("unknown command %q: want serve, migrate or healthcheck", command)
+		return fmt.Errorf("unknown command %q: want serve, sync, migrate or healthcheck", command)
 	}
 }
 
@@ -119,9 +126,10 @@ func serve(ctx context.Context, getenv func(string) string, stdout io.Writer) er
 	if err != nil {
 		return err
 	}
-	alerts := alerting.New(postgres.NewAlerts(pool), time.Now)
+	curtailed := postgres.NewCurtailment(pool, time.Now)
+	alerts := alerting.New(postgres.NewAlerts(pool), curtailed, time.Now)
 
-	api, err := httpapi.New(alerts, ident, httpapi.Options{
+	api, err := httpapi.New(httpapi.UseCases{Alerts: alerts, Identity: ident, Reports: reports.New(curtailed)}, httpapi.Options{
 		Logger:         logger,
 		AllowedOrigins: cfg.AllowedOrigins,
 		MaxBodyBytes:   64 << 10,
@@ -177,6 +185,77 @@ func serve(ctx context.Context, getenv func(string) string, stdout io.Writer) er
 
 	probe.SetReady(true)
 	logger.Info("serving", slog.String("api", cfg.APIAddr), slog.String("admin", cfg.AdminAddr), slog.String("version", version))
+	if err := g.Wait(); err != nil {
+		return err
+	}
+	logger.Info("stopped")
+	return nil
+}
+
+// syncData keeps Spillway's copy of the ONS's data current. It runs apart from
+// serve, so the API needs no way out to the internet, and it answers health
+// and metrics on the admin port as serve does.
+func syncData(ctx context.Context, getenv func(string) string, stdout io.Writer) error {
+	ctx, stopSignals := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	defer stopSignals()
+
+	cfg, logger, err := setup(getenv, stdout)
+	if err != nil {
+		return err
+	}
+	tel, err := telemetry.Setup(ctx, telemetry.Options{Service: "spillway-sync", Version: version, ExportTraces: cfg.OTLPEndpoint != ""})
+	if err != nil {
+		return err
+	}
+	defer func() {
+		flushCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		defer cancel()
+		if err := tel.Shutdown(flushCtx); err != nil {
+			logger.Warn("telemetry did not flush", slog.Any("error", err))
+		}
+	}()
+
+	pool, err := postgres.Connect(ctx, postgres.PoolConfig{URL: cfg.DatabaseURL, MaxConns: 4, Tracer: tel.QueryTracer()})
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+
+	// A file is a few megabytes; two minutes is a slow line, not a hung one.
+	client := &http.Client{Timeout: 2 * time.Minute}
+	sync := ingest.New(ons.New(cfg.ONSURL, client), postgres.NewCurtailment(pool, time.Now), logger)
+	run := func(ctx context.Context) error {
+		start := time.Now()
+		report, err := sync.Run(ctx)
+		attrs := []any{slog.Int("files", report.Files), slog.Int("loaded", report.Loaded), slog.Int("failed", report.Failed), slog.Duration("took", time.Since(start))}
+		if err != nil {
+			logger.ErrorContext(ctx, "sync failed", append(attrs, slog.Any("error", err))...)
+			return err
+		}
+		logger.InfoContext(ctx, "sync done", attrs...)
+		return nil
+	}
+	if cfg.SyncInterval == 0 {
+		return run(ctx)
+	}
+
+	probe := health.New(pool.Ping)
+	admin := http.NewServeMux()
+	admin.HandleFunc("GET /livez", probe.Live)
+	admin.HandleFunc("GET /readyz", probe.Ready)
+	admin.Handle("GET /metrics", tel.Metrics)
+
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		return httpserver.Run(gctx, httpserver.New(cfg.AdminAddr, admin, logger), cfg.ShutdownTimeout)
+	})
+	g.Go(func() error {
+		// A failed run is logged and tried again at the next tick.
+		_ = run(gctx)
+		return schedule.Every(gctx, cfg.SyncInterval, func(ctx context.Context) { _ = run(ctx) })
+	})
+	probe.SetReady(true)
+	logger.Info("syncing", slog.String("from", cfg.ONSURL), slog.Duration("every", cfg.SyncInterval), slog.String("version", version))
 	if err := g.Wait(); err != nil {
 		return err
 	}

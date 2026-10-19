@@ -10,6 +10,7 @@ import (
 
 	"github.com/christianchiavelli/spillway/services/api/internal/domain"
 	"github.com/christianchiavelli/spillway/services/api/internal/domain/alert"
+	"github.com/christianchiavelli/spillway/services/api/internal/domain/curtailment"
 )
 
 func TestNewAcceptsAValidDraft(t *testing.T) {
@@ -30,8 +31,8 @@ func TestNewAcceptsAValidDraft(t *testing.T) {
 		ID:           id,
 		AccountID:    owner,
 		Name:         "Northeast wind",
-		Source:       alert.Wind,
-		Subsystem:    alert.Northeast,
+		Source:       curtailment.Wind,
+		Subsystem:    curtailment.Northeast,
 		ThresholdMWh: 500,
 		CreatedAt:    time.Date(2026, 10, 17, 12, 30, 0, 123456000, time.UTC),
 	}

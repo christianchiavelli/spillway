@@ -17,6 +17,7 @@ import (
 	"github.com/christianchiavelli/spillway/services/api/internal/app/identity"
 	"github.com/christianchiavelli/spillway/services/api/internal/domain"
 	"github.com/christianchiavelli/spillway/services/api/internal/domain/alert"
+	"github.com/christianchiavelli/spillway/services/api/internal/domain/curtailment"
 )
 
 // NewError turns the error of a handler or of the security handler into the
@@ -56,6 +57,11 @@ func (h *handler) NewError(ctx context.Context, err error) *oas.ProblemStatusCod
 		return unauthenticated(`Bearer error="invalid_token"`)
 	case errors.Is(err, domain.ErrNotFound):
 		return problem(http.StatusNotFound, oas.ProblemCodeNotFound, "")
+	case errors.Is(err, curtailment.ErrNoData):
+		// The first files take a few minutes to load after a fresh start.
+		p := problem(http.StatusServiceUnavailable, oas.ProblemCodeDataUnavailable, "The ONS's data is still being loaded.")
+		p.RetryAfter = oas.NewOptInt(60)
+		return p
 	}
 
 	if errors.Is(err, context.Canceled) {
@@ -99,7 +105,7 @@ func (h *handler) handleRequestError(ctx context.Context, w http.ResponseWriter,
 		case errors.As(err, &body):
 			writeProblem(w, problem(http.StatusBadRequest, oas.ProblemCodeMalformedRequest, "The body is not what this operation reads."))
 		case errors.As(err, &params):
-			writeProblem(w, problem(http.StatusBadRequest, oas.ProblemCodeMalformedRequest, "A parameter in the path is not what this operation reads."))
+			writeProblem(w, problem(http.StatusBadRequest, oas.ProblemCodeMalformedRequest, "A parameter is not what this operation reads."))
 		default:
 			h.logger.ErrorContext(ctx, "request failed outside a handler", slog.Any("error", err))
 			writeProblem(w, problem(http.StatusInternalServerError, oas.ProblemCodeInternal, ""))

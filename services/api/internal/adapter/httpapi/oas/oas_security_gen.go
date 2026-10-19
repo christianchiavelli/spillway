@@ -40,6 +40,7 @@ var operationRolesSession = map[string][]string{
 	DeleteCurrentSessionOperation: []string{},
 	GetCurrentSessionOperation:    []string{},
 	ListAlertsOperation:           []string{},
+	ListFiringsOperation:          []string{},
 }
 
 // GetRolesForSession returns the required roles for the given operation.

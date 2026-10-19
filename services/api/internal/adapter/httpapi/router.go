@@ -23,10 +23,17 @@ type Options struct {
 	MeterProvider  metric.MeterProvider
 }
 
+// UseCases are what the edge calls. Every field is required.
+type UseCases struct {
+	Alerts   Alerts
+	Identity Identity
+	Reports  Reports
+}
+
 // New returns the API's HTTP handler: the generated router, with the
 // middleware every request passes through on its way in.
-func New(alerts Alerts, ident Identity, opts Options) (http.Handler, error) {
-	h := &handler{alerts: alerts, identity: ident, logger: opts.Logger}
+func New(uc UseCases, opts Options) (http.Handler, error) {
+	h := &handler{alerts: uc.Alerts, identity: uc.Identity, reports: uc.Reports, logger: opts.Logger}
 	srv, err := oas.NewServer(h, h,
 		oas.WithErrorHandler(h.handleRequestError),
 		oas.WithNotFound(h.notFound),

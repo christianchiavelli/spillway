@@ -50,12 +50,47 @@ type Handler interface {
 	//
 	// GET /v1/sessions/current
 	GetCurrentSession(ctx context.Context) (*CurrentSession, error)
+	// GetCurtailment implements getCurtailment operation.
+	//
+	// The period is the day, the week from Monday or the calendar month that holds `date`, the latest day
+	// published when it is left out. A day the data does not reach answers `404`.
+	//
+	// GET /v1/curtailment
+	GetCurtailment(ctx context.Context, params GetCurtailmentParams) (*Curtailment, error)
 	// ListAlerts implements listAlerts operation.
 	//
 	// An account holds at most 20 alerts, so the list is never paged.
 	//
 	// GET /v1/alerts
 	ListAlerts(ctx context.Context) (*AlertList, error)
+	// ListDailyCurtailment implements listDailyCurtailment operation.
+	//
+	// Every source and subsystem, each with one figure a day, from the oldest day to the latest published.
+	//
+	// GET /v1/curtailment/days
+	ListDailyCurtailment(ctx context.Context, params ListDailyCurtailmentParams) (*DailyCurtailment, error)
+	// ListFirings implements listFirings operation.
+	//
+	// An alert fires on each day its source, in its subsystem, loses more energy than its threshold. The
+	// days are the 30 up to the latest the ONS has published, read from the data as it stands: when the
+	// ONS revises a day, its firings follow. Before any data is loaded the page is empty.
+	//
+	// GET /v1/alerts/firings
+	ListFirings(ctx context.Context, params ListFiringsParams) (*FiringPage, error)
+	// ListMonthlyCurtailment implements listMonthlyCurtailment operation.
+	//
+	// List every month the ONS has published, oldest first.
+	//
+	// GET /v1/curtailment/months
+	ListMonthlyCurtailment(ctx context.Context) (*MonthlyCurtailment, error)
+	// ListPlants implements listPlants operation.
+	//
+	// A plant can be one plant or a group of plants that share one connection to the grid, as the ONS
+	// reports them. Only the plants that lost energy in the period are listed; `reporting` counts every
+	// plant that reported.
+	//
+	// GET /v1/plants
+	ListPlants(ctx context.Context, params ListPlantsParams) (*PlantRanking, error)
 	// NewError creates *ProblemStatusCodeWithHeaders from error returned by handler.
 	//
 	// Used for common default response.

@@ -8,9 +8,11 @@ import (
 	"github.com/ogen-go/ogen/validate"
 
 	"github.com/christianchiavelli/spillway/services/api/internal/adapter/httpapi/oas"
+	"github.com/christianchiavelli/spillway/services/api/internal/app/reports"
 	"github.com/christianchiavelli/spillway/services/api/internal/domain"
 	"github.com/christianchiavelli/spillway/services/api/internal/domain/account"
 	"github.com/christianchiavelli/spillway/services/api/internal/domain/alert"
+	"github.com/christianchiavelli/spillway/services/api/internal/domain/curtailment"
 )
 
 // The contract and the domain state the same limits in two places: the
@@ -68,18 +70,54 @@ func TestTheContractAndTheDomainAgreeOnEveryLimit(t *testing.T) {
 		}
 	}
 
-	for _, s := range []alert.Source{alert.Wind, alert.Solar} {
+	for _, s := range curtailment.Sources() {
 		if err := oas.Source(s).Validate(); err != nil {
 			t.Errorf("source %q is not in the contract", s)
 		}
 	}
-	for _, s := range []alert.Subsystem{alert.North, alert.Northeast, alert.Southeast, alert.South} {
+	if got, want := len(oas.Source("").AllValues()), len(curtailment.Sources()); got != want {
+		t.Errorf("the contract has %d sources, the domain %d", got, want)
+	}
+	for _, s := range curtailment.Subsystems() {
 		if err := oas.Subsystem(s).Validate(); err != nil {
 			t.Errorf("subsystem %q is not in the contract", s)
 		}
 	}
-	if got, want := len(oas.Subsystem("").AllValues()), 4; got != want {
+	if got, want := len(oas.Subsystem("").AllValues()), len(curtailment.Subsystems()); got != want {
 		t.Errorf("the contract has %d subsystems, the domain %d", got, want)
+	}
+	for _, r := range oas.Reason("").AllValues() {
+		if !curtailment.Reason(r).Valid() {
+			t.Errorf("reason %q is not in the domain", r)
+		}
+	}
+	for _, k := range []curtailment.Kind{curtailment.Daily, curtailment.Weekly, curtailment.Monthly} {
+		if err := oas.PeriodKind(k).Validate(); err != nil {
+			t.Errorf("period %q is not in the contract", k)
+		}
+	}
+	if got := len(oas.PeriodKind("").AllValues()); got != 3 {
+		t.Errorf("the contract has %d periods, the domain 3", got)
+	}
+	var series []oas.SubsystemDays
+	for _, source := range curtailment.Sources() {
+		for _, sub := range curtailment.Subsystems() {
+			series = append(series, oas.SubsystemDays{Source: oas.Source(source), Subsystem: oas.Subsystem(sub), CurtailedMwh: []oas.Energy{}})
+		}
+	}
+	if err := (&oas.DailyCurtailment{Series: series}).Validate(); err != nil {
+		t.Errorf("the contract refuses a series for every source and subsystem: %v", err)
+	}
+	if err := (&oas.SubsystemDays{Source: oas.SourceWind, Subsystem: oas.SubsystemNE, CurtailedMwh: make([]oas.Energy, reports.MaxRecentDays)}).Validate(); err != nil {
+		t.Errorf("the contract refuses the most days the use case returns: %v", err)
+	}
+	daysFired := oas.WatchedAlert{Name: "an alert", Source: oas.SourceWind, Subsystem: oas.SubsystemNE, ThresholdMwh: 1, DaysFired: alert.RecentDays}
+	if err := daysFired.Validate(); err != nil {
+		t.Errorf("the contract refuses an alert that fired every recent day: %v", err)
+	}
+	daysFired.DaysFired++
+	if err := daysFired.Validate(); err == nil {
+		t.Error("the contract accepts more days fired than the recent days")
 	}
 }
 
@@ -108,9 +146,9 @@ func TestFieldCodeReadsWhatTheGeneratedValidatorsReturn(t *testing.T) {
 }
 
 func alertList(n int) *oas.AlertList {
-	items := make([]oas.Alert, n)
+	items := make([]oas.WatchedAlert, n)
 	for i := range items {
-		items[i] = oas.Alert{Name: "an alert", Source: oas.SourceWind, Subsystem: oas.SubsystemNE, ThresholdMwh: 1}
+		items[i] = oas.WatchedAlert{Name: "an alert", Source: oas.SourceWind, Subsystem: oas.SubsystemNE, ThresholdMwh: 1}
 	}
 	return &oas.AlertList{Items: items}
 }

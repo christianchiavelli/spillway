@@ -112,16 +112,16 @@ func (s *Alert) SetCreatedAt(val time.Time) {
 
 // Ref: #/components/schemas/AlertList
 type AlertList struct {
-	Items []Alert `json:"items"`
+	Items []WatchedAlert `json:"items"`
 }
 
 // GetItems returns the value of Items.
-func (s *AlertList) GetItems() []Alert {
+func (s *AlertList) GetItems() []WatchedAlert {
 	return s.Items
 }
 
 // SetItems sets the value of Items.
-func (s *AlertList) SetItems(val []Alert) {
+func (s *AlertList) SetItems(val []WatchedAlert) {
 	s.Items = val
 }
 
@@ -180,6 +180,167 @@ func (s *CurrentSession) SetAccount(val Account) {
 	s.Account = val
 }
 
+// Ref: #/components/schemas/Curtailment
+type Curtailment struct {
+	Period Period `json:"period"`
+	// The start of the last half hour published.
+	PublishedThrough time.Time    `json:"publishedThrough"`
+	Wind             SourceEnergy `json:"wind"`
+	Solar            SourceEnergy `json:"solar"`
+	// What both sources lost in the span compared with, when the period has one.
+	PreviousCurtailedMwh OptEnergy `json:"previousCurtailedMwh"`
+	// The plants that lost energy in the period.
+	PlantsLimited int `json:"plantsLimited"`
+	// The plants that reported in the period.
+	PlantsReporting int `json:"plantsReporting"`
+	// The half hours of a day, or the days of a week or a month, from the first to the latest published.
+	Series []Slot `json:"series"`
+	// All four subsystems.
+	BySubsystem []SubsystemSplit `json:"bySubsystem"`
+	// The reasons the ONS gave in the period.
+	ByReason []ReasonSplit `json:"byReason"`
+}
+
+// GetPeriod returns the value of Period.
+func (s *Curtailment) GetPeriod() Period {
+	return s.Period
+}
+
+// GetPublishedThrough returns the value of PublishedThrough.
+func (s *Curtailment) GetPublishedThrough() time.Time {
+	return s.PublishedThrough
+}
+
+// GetWind returns the value of Wind.
+func (s *Curtailment) GetWind() SourceEnergy {
+	return s.Wind
+}
+
+// GetSolar returns the value of Solar.
+func (s *Curtailment) GetSolar() SourceEnergy {
+	return s.Solar
+}
+
+// GetPreviousCurtailedMwh returns the value of PreviousCurtailedMwh.
+func (s *Curtailment) GetPreviousCurtailedMwh() OptEnergy {
+	return s.PreviousCurtailedMwh
+}
+
+// GetPlantsLimited returns the value of PlantsLimited.
+func (s *Curtailment) GetPlantsLimited() int {
+	return s.PlantsLimited
+}
+
+// GetPlantsReporting returns the value of PlantsReporting.
+func (s *Curtailment) GetPlantsReporting() int {
+	return s.PlantsReporting
+}
+
+// GetSeries returns the value of Series.
+func (s *Curtailment) GetSeries() []Slot {
+	return s.Series
+}
+
+// GetBySubsystem returns the value of BySubsystem.
+func (s *Curtailment) GetBySubsystem() []SubsystemSplit {
+	return s.BySubsystem
+}
+
+// GetByReason returns the value of ByReason.
+func (s *Curtailment) GetByReason() []ReasonSplit {
+	return s.ByReason
+}
+
+// SetPeriod sets the value of Period.
+func (s *Curtailment) SetPeriod(val Period) {
+	s.Period = val
+}
+
+// SetPublishedThrough sets the value of PublishedThrough.
+func (s *Curtailment) SetPublishedThrough(val time.Time) {
+	s.PublishedThrough = val
+}
+
+// SetWind sets the value of Wind.
+func (s *Curtailment) SetWind(val SourceEnergy) {
+	s.Wind = val
+}
+
+// SetSolar sets the value of Solar.
+func (s *Curtailment) SetSolar(val SourceEnergy) {
+	s.Solar = val
+}
+
+// SetPreviousCurtailedMwh sets the value of PreviousCurtailedMwh.
+func (s *Curtailment) SetPreviousCurtailedMwh(val OptEnergy) {
+	s.PreviousCurtailedMwh = val
+}
+
+// SetPlantsLimited sets the value of PlantsLimited.
+func (s *Curtailment) SetPlantsLimited(val int) {
+	s.PlantsLimited = val
+}
+
+// SetPlantsReporting sets the value of PlantsReporting.
+func (s *Curtailment) SetPlantsReporting(val int) {
+	s.PlantsReporting = val
+}
+
+// SetSeries sets the value of Series.
+func (s *Curtailment) SetSeries(val []Slot) {
+	s.Series = val
+}
+
+// SetBySubsystem sets the value of BySubsystem.
+func (s *Curtailment) SetBySubsystem(val []SubsystemSplit) {
+	s.BySubsystem = val
+}
+
+// SetByReason sets the value of ByReason.
+func (s *Curtailment) SetByReason(val []ReasonSplit) {
+	s.ByReason = val
+}
+
+// Ref: #/components/schemas/DailyCurtailment
+type DailyCurtailment struct {
+	From Day `json:"from"`
+	To   Day `json:"to"`
+	// Every source and subsystem.
+	Series []SubsystemDays `json:"series"`
+}
+
+// GetFrom returns the value of From.
+func (s *DailyCurtailment) GetFrom() Day {
+	return s.From
+}
+
+// GetTo returns the value of To.
+func (s *DailyCurtailment) GetTo() Day {
+	return s.To
+}
+
+// GetSeries returns the value of Series.
+func (s *DailyCurtailment) GetSeries() []SubsystemDays {
+	return s.Series
+}
+
+// SetFrom sets the value of From.
+func (s *DailyCurtailment) SetFrom(val Day) {
+	s.From = val
+}
+
+// SetTo sets the value of To.
+func (s *DailyCurtailment) SetTo(val Day) {
+	s.To = val
+}
+
+// SetSeries sets the value of Series.
+func (s *DailyCurtailment) SetSeries(val []SubsystemDays) {
+	s.Series = val
+}
+
+type Day time.Time
+
 // DeleteAlertNoContent is response for DeleteAlert operation.
 type DeleteAlertNoContent struct{}
 
@@ -187,6 +348,8 @@ type DeleteAlertNoContent struct{}
 type DeleteCurrentSessionNoContent struct{}
 
 type Email string
+
+type Energy float64
 
 // Ref: #/components/schemas/FieldError
 type FieldError struct {
@@ -215,6 +378,183 @@ func (s *FieldError) SetPointer(val string) {
 // SetCode sets the value of Code.
 func (s *FieldError) SetCode(val string) {
 	s.Code = val
+}
+
+// A day an alert's source, in its subsystem, lost more than its threshold.
+// Ref: #/components/schemas/Firing
+type Firing struct {
+	AlertId      uuid.UUID `json:"alertId"`
+	AlertName    AlertName `json:"alertName"`
+	Day          Day       `json:"day"`
+	CurtailedMwh Energy    `json:"curtailedMwh"`
+	ThresholdMwh Threshold `json:"thresholdMwh"`
+}
+
+// GetAlertId returns the value of AlertId.
+func (s *Firing) GetAlertId() uuid.UUID {
+	return s.AlertId
+}
+
+// GetAlertName returns the value of AlertName.
+func (s *Firing) GetAlertName() AlertName {
+	return s.AlertName
+}
+
+// GetDay returns the value of Day.
+func (s *Firing) GetDay() Day {
+	return s.Day
+}
+
+// GetCurtailedMwh returns the value of CurtailedMwh.
+func (s *Firing) GetCurtailedMwh() Energy {
+	return s.CurtailedMwh
+}
+
+// GetThresholdMwh returns the value of ThresholdMwh.
+func (s *Firing) GetThresholdMwh() Threshold {
+	return s.ThresholdMwh
+}
+
+// SetAlertId sets the value of AlertId.
+func (s *Firing) SetAlertId(val uuid.UUID) {
+	s.AlertId = val
+}
+
+// SetAlertName sets the value of AlertName.
+func (s *Firing) SetAlertName(val AlertName) {
+	s.AlertName = val
+}
+
+// SetDay sets the value of Day.
+func (s *Firing) SetDay(val Day) {
+	s.Day = val
+}
+
+// SetCurtailedMwh sets the value of CurtailedMwh.
+func (s *Firing) SetCurtailedMwh(val Energy) {
+	s.CurtailedMwh = val
+}
+
+// SetThresholdMwh sets the value of ThresholdMwh.
+func (s *Firing) SetThresholdMwh(val Threshold) {
+	s.ThresholdMwh = val
+}
+
+// Ref: #/components/schemas/FiringPage
+type FiringPage struct {
+	// The first day the firings cover. Left out before any data is loaded.
+	From OptDay `json:"from"`
+	// The last day the firings cover, the latest published.
+	Through OptDay `json:"through"`
+	// The firings in all the days, on every page.
+	Total int      `json:"total"`
+	Items []Firing `json:"items"`
+}
+
+// GetFrom returns the value of From.
+func (s *FiringPage) GetFrom() OptDay {
+	return s.From
+}
+
+// GetThrough returns the value of Through.
+func (s *FiringPage) GetThrough() OptDay {
+	return s.Through
+}
+
+// GetTotal returns the value of Total.
+func (s *FiringPage) GetTotal() int {
+	return s.Total
+}
+
+// GetItems returns the value of Items.
+func (s *FiringPage) GetItems() []Firing {
+	return s.Items
+}
+
+// SetFrom sets the value of From.
+func (s *FiringPage) SetFrom(val OptDay) {
+	s.From = val
+}
+
+// SetThrough sets the value of Through.
+func (s *FiringPage) SetThrough(val OptDay) {
+	s.Through = val
+}
+
+// SetTotal sets the value of Total.
+func (s *FiringPage) SetTotal(val int) {
+	s.Total = val
+}
+
+// SetItems sets the value of Items.
+func (s *FiringPage) SetItems(val []Firing) {
+	s.Items = val
+}
+
+// Ref: #/components/schemas/MonthCurtailment
+type MonthCurtailment struct {
+	// The month's first day.
+	Month Day `json:"month"`
+	// Left out before the ONS published the source.
+	Wind OptSourceEnergy `json:"wind"`
+	// Left out before the ONS published the source.
+	Solar OptSourceEnergy `json:"solar"`
+}
+
+// GetMonth returns the value of Month.
+func (s *MonthCurtailment) GetMonth() Day {
+	return s.Month
+}
+
+// GetWind returns the value of Wind.
+func (s *MonthCurtailment) GetWind() OptSourceEnergy {
+	return s.Wind
+}
+
+// GetSolar returns the value of Solar.
+func (s *MonthCurtailment) GetSolar() OptSourceEnergy {
+	return s.Solar
+}
+
+// SetMonth sets the value of Month.
+func (s *MonthCurtailment) SetMonth(val Day) {
+	s.Month = val
+}
+
+// SetWind sets the value of Wind.
+func (s *MonthCurtailment) SetWind(val OptSourceEnergy) {
+	s.Wind = val
+}
+
+// SetSolar sets the value of Solar.
+func (s *MonthCurtailment) SetSolar(val OptSourceEnergy) {
+	s.Solar = val
+}
+
+// Ref: #/components/schemas/MonthlyCurtailment
+type MonthlyCurtailment struct {
+	PublishedThrough time.Time          `json:"publishedThrough"`
+	Months           []MonthCurtailment `json:"months"`
+}
+
+// GetPublishedThrough returns the value of PublishedThrough.
+func (s *MonthlyCurtailment) GetPublishedThrough() time.Time {
+	return s.PublishedThrough
+}
+
+// GetMonths returns the value of Months.
+func (s *MonthlyCurtailment) GetMonths() []MonthCurtailment {
+	return s.Months
+}
+
+// SetPublishedThrough sets the value of PublishedThrough.
+func (s *MonthlyCurtailment) SetPublishedThrough(val time.Time) {
+	s.PublishedThrough = val
+}
+
+// SetMonths sets the value of Months.
+func (s *MonthlyCurtailment) SetMonths(val []MonthCurtailment) {
+	s.Months = val
 }
 
 // Ref: #/components/schemas/NewAccount
@@ -293,6 +633,98 @@ func (s *NewAlert) SetThresholdMwh(val Threshold) {
 	s.ThresholdMwh = val
 }
 
+// NewOptDay returns new OptDay with value set to v.
+func NewOptDay(v Day) OptDay {
+	return OptDay{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptDay is optional Day.
+type OptDay struct {
+	Value Day
+	Set   bool
+}
+
+// IsSet returns true if OptDay was set.
+func (o OptDay) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptDay) Reset() {
+	var v Day
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptDay) SetTo(v Day) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptDay) Get() (v Day, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptDay) Or(d Day) Day {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptEnergy returns new OptEnergy with value set to v.
+func NewOptEnergy(v Energy) OptEnergy {
+	return OptEnergy{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptEnergy is optional Energy.
+type OptEnergy struct {
+	Value Energy
+	Set   bool
+}
+
+// IsSet returns true if OptEnergy was set.
+func (o OptEnergy) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptEnergy) Reset() {
+	var v Energy
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptEnergy) SetTo(v Energy) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptEnergy) Get() (v Energy, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptEnergy) Or(d Energy) Energy {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptInt returns new OptInt with value set to v.
 func NewOptInt(v int) OptInt {
 	return OptInt{
@@ -333,6 +765,144 @@ func (o OptInt) Get() (v int, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptInt) Or(d int) int {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptPeriodKind returns new OptPeriodKind with value set to v.
+func NewOptPeriodKind(v PeriodKind) OptPeriodKind {
+	return OptPeriodKind{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptPeriodKind is optional PeriodKind.
+type OptPeriodKind struct {
+	Value PeriodKind
+	Set   bool
+}
+
+// IsSet returns true if OptPeriodKind was set.
+func (o OptPeriodKind) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptPeriodKind) Reset() {
+	var v PeriodKind
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptPeriodKind) SetTo(v PeriodKind) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptPeriodKind) Get() (v PeriodKind, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptPeriodKind) Or(d PeriodKind) PeriodKind {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSource returns new OptSource with value set to v.
+func NewOptSource(v Source) OptSource {
+	return OptSource{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSource is optional Source.
+type OptSource struct {
+	Value Source
+	Set   bool
+}
+
+// IsSet returns true if OptSource was set.
+func (o OptSource) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSource) Reset() {
+	var v Source
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSource) SetTo(v Source) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSource) Get() (v Source, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSource) Or(d Source) Source {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSourceEnergy returns new OptSourceEnergy with value set to v.
+func NewOptSourceEnergy(v SourceEnergy) OptSourceEnergy {
+	return OptSourceEnergy{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSourceEnergy is optional SourceEnergy.
+type OptSourceEnergy struct {
+	Value SourceEnergy
+	Set   bool
+}
+
+// IsSet returns true if OptSourceEnergy was set.
+func (o OptSourceEnergy) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSourceEnergy) Reset() {
+	var v SourceEnergy
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSourceEnergy) SetTo(v SourceEnergy) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSourceEnergy) Get() (v SourceEnergy, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSourceEnergy) Or(d SourceEnergy) SourceEnergy {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -383,6 +953,359 @@ func (o OptString) Or(d string) string {
 		return v
 	}
 	return d
+}
+
+// NewOptSubsystem returns new OptSubsystem with value set to v.
+func NewOptSubsystem(v Subsystem) OptSubsystem {
+	return OptSubsystem{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSubsystem is optional Subsystem.
+type OptSubsystem struct {
+	Value Subsystem
+	Set   bool
+}
+
+// IsSet returns true if OptSubsystem was set.
+func (o OptSubsystem) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSubsystem) Reset() {
+	var v Subsystem
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSubsystem) SetTo(v Subsystem) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSubsystem) Get() (v Subsystem, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSubsystem) Or(d Subsystem) Subsystem {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// A day, a week or a month, read up to the latest day published, and the span before it that it is
+// compared with: as many days of the period before as this one has, so a week so far is compared with
+// the same days of the week before.
+// Ref: #/components/schemas/Period
+type Period struct {
+	Kind  PeriodKind `json:"kind"`
+	Start Day        `json:"start"`
+	// The last day, which may not be published yet.
+	End Day `json:"end"`
+	// The last day with data, `end` or the latest published.
+	Through Day `json:"through"`
+	// The first day compared with. Left out where the data does not reach.
+	PreviousStart OptDay `json:"previousStart"`
+	PreviousEnd   OptDay `json:"previousEnd"`
+	// A day of the period before. Left out where the data does not reach.
+	Earlier OptDay `json:"earlier"`
+	// A day of the period after. Left out until it is published.
+	Later OptDay `json:"later"`
+}
+
+// GetKind returns the value of Kind.
+func (s *Period) GetKind() PeriodKind {
+	return s.Kind
+}
+
+// GetStart returns the value of Start.
+func (s *Period) GetStart() Day {
+	return s.Start
+}
+
+// GetEnd returns the value of End.
+func (s *Period) GetEnd() Day {
+	return s.End
+}
+
+// GetThrough returns the value of Through.
+func (s *Period) GetThrough() Day {
+	return s.Through
+}
+
+// GetPreviousStart returns the value of PreviousStart.
+func (s *Period) GetPreviousStart() OptDay {
+	return s.PreviousStart
+}
+
+// GetPreviousEnd returns the value of PreviousEnd.
+func (s *Period) GetPreviousEnd() OptDay {
+	return s.PreviousEnd
+}
+
+// GetEarlier returns the value of Earlier.
+func (s *Period) GetEarlier() OptDay {
+	return s.Earlier
+}
+
+// GetLater returns the value of Later.
+func (s *Period) GetLater() OptDay {
+	return s.Later
+}
+
+// SetKind sets the value of Kind.
+func (s *Period) SetKind(val PeriodKind) {
+	s.Kind = val
+}
+
+// SetStart sets the value of Start.
+func (s *Period) SetStart(val Day) {
+	s.Start = val
+}
+
+// SetEnd sets the value of End.
+func (s *Period) SetEnd(val Day) {
+	s.End = val
+}
+
+// SetThrough sets the value of Through.
+func (s *Period) SetThrough(val Day) {
+	s.Through = val
+}
+
+// SetPreviousStart sets the value of PreviousStart.
+func (s *Period) SetPreviousStart(val OptDay) {
+	s.PreviousStart = val
+}
+
+// SetPreviousEnd sets the value of PreviousEnd.
+func (s *Period) SetPreviousEnd(val OptDay) {
+	s.PreviousEnd = val
+}
+
+// SetEarlier sets the value of Earlier.
+func (s *Period) SetEarlier(val OptDay) {
+	s.Earlier = val
+}
+
+// SetLater sets the value of Later.
+func (s *Period) SetLater(val OptDay) {
+	s.Later = val
+}
+
+// `day`, `week`, from Monday to Sunday, or `month`, a calendar month. The day when left out.
+// Ref: #/components/schemas/PeriodKind
+type PeriodKind string
+
+const (
+	PeriodKindDay   PeriodKind = "day"
+	PeriodKindWeek  PeriodKind = "week"
+	PeriodKindMonth PeriodKind = "month"
+)
+
+// AllValues returns all PeriodKind values.
+func (PeriodKind) AllValues() []PeriodKind {
+	return []PeriodKind{
+		PeriodKindDay,
+		PeriodKindWeek,
+		PeriodKindMonth,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s PeriodKind) MarshalText() ([]byte, error) {
+	switch s {
+	case PeriodKindDay:
+		return []byte(s), nil
+	case PeriodKindWeek:
+		return []byte(s), nil
+	case PeriodKindMonth:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *PeriodKind) UnmarshalText(data []byte) error {
+	switch PeriodKind(data) {
+	case PeriodKindDay:
+		*s = PeriodKindDay
+		return nil
+	case PeriodKindWeek:
+		*s = PeriodKindWeek
+		return nil
+	case PeriodKindMonth:
+		*s = PeriodKindMonth
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// A plant's period.
+// Ref: #/components/schemas/PlantCurtailment
+type PlantCurtailment struct {
+	// The ONS's id for the plant or group.
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// The two letters of a Brazilian state.
+	State        string    `json:"state"`
+	Subsystem    Subsystem `json:"subsystem"`
+	Source       Source    `json:"source"`
+	CurtailedMwh Energy    `json:"curtailedMwh"`
+	GeneratedMwh Energy    `json:"generatedMwh"`
+	// The minutes the ONS held it under a limit, at most a month's.
+	LimitedMinutes int32 `json:"limitedMinutes"`
+}
+
+// GetID returns the value of ID.
+func (s *PlantCurtailment) GetID() string {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *PlantCurtailment) GetName() string {
+	return s.Name
+}
+
+// GetState returns the value of State.
+func (s *PlantCurtailment) GetState() string {
+	return s.State
+}
+
+// GetSubsystem returns the value of Subsystem.
+func (s *PlantCurtailment) GetSubsystem() Subsystem {
+	return s.Subsystem
+}
+
+// GetSource returns the value of Source.
+func (s *PlantCurtailment) GetSource() Source {
+	return s.Source
+}
+
+// GetCurtailedMwh returns the value of CurtailedMwh.
+func (s *PlantCurtailment) GetCurtailedMwh() Energy {
+	return s.CurtailedMwh
+}
+
+// GetGeneratedMwh returns the value of GeneratedMwh.
+func (s *PlantCurtailment) GetGeneratedMwh() Energy {
+	return s.GeneratedMwh
+}
+
+// GetLimitedMinutes returns the value of LimitedMinutes.
+func (s *PlantCurtailment) GetLimitedMinutes() int32 {
+	return s.LimitedMinutes
+}
+
+// SetID sets the value of ID.
+func (s *PlantCurtailment) SetID(val string) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *PlantCurtailment) SetName(val string) {
+	s.Name = val
+}
+
+// SetState sets the value of State.
+func (s *PlantCurtailment) SetState(val string) {
+	s.State = val
+}
+
+// SetSubsystem sets the value of Subsystem.
+func (s *PlantCurtailment) SetSubsystem(val Subsystem) {
+	s.Subsystem = val
+}
+
+// SetSource sets the value of Source.
+func (s *PlantCurtailment) SetSource(val Source) {
+	s.Source = val
+}
+
+// SetCurtailedMwh sets the value of CurtailedMwh.
+func (s *PlantCurtailment) SetCurtailedMwh(val Energy) {
+	s.CurtailedMwh = val
+}
+
+// SetGeneratedMwh sets the value of GeneratedMwh.
+func (s *PlantCurtailment) SetGeneratedMwh(val Energy) {
+	s.GeneratedMwh = val
+}
+
+// SetLimitedMinutes sets the value of LimitedMinutes.
+func (s *PlantCurtailment) SetLimitedMinutes(val int32) {
+	s.LimitedMinutes = val
+}
+
+// Ref: #/components/schemas/PlantRanking
+type PlantRanking struct {
+	Period           Period    `json:"period"`
+	PublishedThrough time.Time `json:"publishedThrough"`
+	// The plants that reported in the period.
+	Reporting int `json:"reporting"`
+	// The plants that lost energy, on every page.
+	Total int                `json:"total"`
+	Items []PlantCurtailment `json:"items"`
+}
+
+// GetPeriod returns the value of Period.
+func (s *PlantRanking) GetPeriod() Period {
+	return s.Period
+}
+
+// GetPublishedThrough returns the value of PublishedThrough.
+func (s *PlantRanking) GetPublishedThrough() time.Time {
+	return s.PublishedThrough
+}
+
+// GetReporting returns the value of Reporting.
+func (s *PlantRanking) GetReporting() int {
+	return s.Reporting
+}
+
+// GetTotal returns the value of Total.
+func (s *PlantRanking) GetTotal() int {
+	return s.Total
+}
+
+// GetItems returns the value of Items.
+func (s *PlantRanking) GetItems() []PlantCurtailment {
+	return s.Items
+}
+
+// SetPeriod sets the value of Period.
+func (s *PlantRanking) SetPeriod(val Period) {
+	s.Period = val
+}
+
+// SetPublishedThrough sets the value of PublishedThrough.
+func (s *PlantRanking) SetPublishedThrough(val time.Time) {
+	s.PublishedThrough = val
+}
+
+// SetReporting sets the value of Reporting.
+func (s *PlantRanking) SetReporting(val int) {
+	s.Reporting = val
+}
+
+// SetTotal sets the value of Total.
+func (s *PlantRanking) SetTotal(val int) {
+	s.Total = val
+}
+
+// SetItems sets the value of Items.
+func (s *PlantRanking) SetItems(val []PlantCurtailment) {
+	s.Items = val
 }
 
 // Ref: #/components/schemas/Problem
@@ -474,6 +1397,7 @@ const (
 	ProblemCodeRequestTooLarge      ProblemCode = "request_too_large"
 	ProblemCodeUnsupportedMediaType ProblemCode = "unsupported_media_type"
 	ProblemCodeRateLimited          ProblemCode = "rate_limited"
+	ProblemCodeDataUnavailable      ProblemCode = "data_unavailable"
 	ProblemCodeInternal             ProblemCode = "internal"
 )
 
@@ -492,6 +1416,7 @@ func (ProblemCode) AllValues() []ProblemCode {
 		ProblemCodeRequestTooLarge,
 		ProblemCodeUnsupportedMediaType,
 		ProblemCodeRateLimited,
+		ProblemCodeDataUnavailable,
 		ProblemCodeInternal,
 	}
 }
@@ -522,6 +1447,8 @@ func (s ProblemCode) MarshalText() ([]byte, error) {
 	case ProblemCodeUnsupportedMediaType:
 		return []byte(s), nil
 	case ProblemCodeRateLimited:
+		return []byte(s), nil
+	case ProblemCodeDataUnavailable:
 		return []byte(s), nil
 	case ProblemCodeInternal:
 		return []byte(s), nil
@@ -568,6 +1495,9 @@ func (s *ProblemCode) UnmarshalText(data []byte) error {
 		return nil
 	case ProblemCodeRateLimited:
 		*s = ProblemCodeRateLimited
+		return nil
+	case ProblemCodeDataUnavailable:
+		*s = ProblemCodeDataUnavailable
 		return nil
 	case ProblemCodeInternal:
 		*s = ProblemCodeInternal
@@ -623,6 +1553,102 @@ func (s *ProblemStatusCodeWithHeaders) SetWWWAuthenticate(val OptString) {
 // SetResponse sets the value of Response.
 func (s *ProblemStatusCodeWithHeaders) SetResponse(val Problem) {
 	s.Response = val
+}
+
+// Why the ONS limited a plant, as it codes it: `ENE` the plants could make more than the grid was
+// using, `CNF` held back to keep the grid reliable, `REL` equipment outside the plant, mostly
+// transmission, could not carry it, `PAR` a limit set in the plant's terms of connection.
+// Ref: #/components/schemas/Reason
+type Reason string
+
+const (
+	ReasonENE Reason = "ENE"
+	ReasonCNF Reason = "CNF"
+	ReasonREL Reason = "REL"
+	ReasonPAR Reason = "PAR"
+)
+
+// AllValues returns all Reason values.
+func (Reason) AllValues() []Reason {
+	return []Reason{
+		ReasonENE,
+		ReasonCNF,
+		ReasonREL,
+		ReasonPAR,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s Reason) MarshalText() ([]byte, error) {
+	switch s {
+	case ReasonENE:
+		return []byte(s), nil
+	case ReasonCNF:
+		return []byte(s), nil
+	case ReasonREL:
+		return []byte(s), nil
+	case ReasonPAR:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *Reason) UnmarshalText(data []byte) error {
+	switch Reason(data) {
+	case ReasonENE:
+		*s = ReasonENE
+		return nil
+	case ReasonCNF:
+		*s = ReasonCNF
+		return nil
+	case ReasonREL:
+		*s = ReasonREL
+		return nil
+	case ReasonPAR:
+		*s = ReasonPAR
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/ReasonSplit
+type ReasonSplit struct {
+	Reason   Reason `json:"reason"`
+	WindMwh  Energy `json:"windMwh"`
+	SolarMwh Energy `json:"solarMwh"`
+}
+
+// GetReason returns the value of Reason.
+func (s *ReasonSplit) GetReason() Reason {
+	return s.Reason
+}
+
+// GetWindMwh returns the value of WindMwh.
+func (s *ReasonSplit) GetWindMwh() Energy {
+	return s.WindMwh
+}
+
+// GetSolarMwh returns the value of SolarMwh.
+func (s *ReasonSplit) GetSolarMwh() Energy {
+	return s.SolarMwh
+}
+
+// SetReason sets the value of Reason.
+func (s *ReasonSplit) SetReason(val Reason) {
+	s.Reason = val
+}
+
+// SetWindMwh sets the value of WindMwh.
+func (s *ReasonSplit) SetWindMwh(val Energy) {
+	s.WindMwh = val
+}
+
+// SetSolarMwh sets the value of SolarMwh.
+func (s *ReasonSplit) SetSolarMwh(val Energy) {
+	s.SolarMwh = val
 }
 
 type Session struct {
@@ -688,6 +1714,44 @@ func (s *SessionGrant) SetAccount(val Account) {
 	s.Account = val
 }
 
+// A half hour or a day, and what each source lost in it.
+// Ref: #/components/schemas/Slot
+type Slot struct {
+	Start    time.Time `json:"start"`
+	WindMwh  Energy    `json:"windMwh"`
+	SolarMwh Energy    `json:"solarMwh"`
+}
+
+// GetStart returns the value of Start.
+func (s *Slot) GetStart() time.Time {
+	return s.Start
+}
+
+// GetWindMwh returns the value of WindMwh.
+func (s *Slot) GetWindMwh() Energy {
+	return s.WindMwh
+}
+
+// GetSolarMwh returns the value of SolarMwh.
+func (s *Slot) GetSolarMwh() Energy {
+	return s.SolarMwh
+}
+
+// SetStart sets the value of Start.
+func (s *Slot) SetStart(val time.Time) {
+	s.Start = val
+}
+
+// SetWindMwh sets the value of WindMwh.
+func (s *Slot) SetWindMwh(val Energy) {
+	s.WindMwh = val
+}
+
+// SetSolarMwh sets the value of SolarMwh.
+func (s *Slot) SetSolarMwh(val Energy) {
+	s.SolarMwh = val
+}
+
 // Where the curtailed energy would have come from.
 // Ref: #/components/schemas/Source
 type Source string
@@ -729,6 +1793,33 @@ func (s *Source) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+// What a source generated, and what the ONS kept it from generating.
+// Ref: #/components/schemas/SourceEnergy
+type SourceEnergy struct {
+	CurtailedMwh Energy `json:"curtailedMwh"`
+	GeneratedMwh Energy `json:"generatedMwh"`
+}
+
+// GetCurtailedMwh returns the value of CurtailedMwh.
+func (s *SourceEnergy) GetCurtailedMwh() Energy {
+	return s.CurtailedMwh
+}
+
+// GetGeneratedMwh returns the value of GeneratedMwh.
+func (s *SourceEnergy) GetGeneratedMwh() Energy {
+	return s.GeneratedMwh
+}
+
+// SetCurtailedMwh sets the value of CurtailedMwh.
+func (s *SourceEnergy) SetCurtailedMwh(val Energy) {
+	s.CurtailedMwh = val
+}
+
+// SetGeneratedMwh sets the value of GeneratedMwh.
+func (s *SourceEnergy) SetGeneratedMwh(val Energy) {
+	s.GeneratedMwh = val
 }
 
 // A subsystem of Brazil's interconnected grid, as the ONS names them: `N` North, `NE` Northeast, `SE`
@@ -789,4 +1880,174 @@ func (s *Subsystem) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/SubsystemDays
+type SubsystemDays struct {
+	Source    Source    `json:"source"`
+	Subsystem Subsystem `json:"subsystem"`
+	// One figure a day, the oldest first.
+	CurtailedMwh []Energy `json:"curtailedMwh"`
+}
+
+// GetSource returns the value of Source.
+func (s *SubsystemDays) GetSource() Source {
+	return s.Source
+}
+
+// GetSubsystem returns the value of Subsystem.
+func (s *SubsystemDays) GetSubsystem() Subsystem {
+	return s.Subsystem
+}
+
+// GetCurtailedMwh returns the value of CurtailedMwh.
+func (s *SubsystemDays) GetCurtailedMwh() []Energy {
+	return s.CurtailedMwh
+}
+
+// SetSource sets the value of Source.
+func (s *SubsystemDays) SetSource(val Source) {
+	s.Source = val
+}
+
+// SetSubsystem sets the value of Subsystem.
+func (s *SubsystemDays) SetSubsystem(val Subsystem) {
+	s.Subsystem = val
+}
+
+// SetCurtailedMwh sets the value of CurtailedMwh.
+func (s *SubsystemDays) SetCurtailedMwh(val []Energy) {
+	s.CurtailedMwh = val
+}
+
+// Ref: #/components/schemas/SubsystemSplit
+type SubsystemSplit struct {
+	Subsystem Subsystem `json:"subsystem"`
+	WindMwh   Energy    `json:"windMwh"`
+	SolarMwh  Energy    `json:"solarMwh"`
+}
+
+// GetSubsystem returns the value of Subsystem.
+func (s *SubsystemSplit) GetSubsystem() Subsystem {
+	return s.Subsystem
+}
+
+// GetWindMwh returns the value of WindMwh.
+func (s *SubsystemSplit) GetWindMwh() Energy {
+	return s.WindMwh
+}
+
+// GetSolarMwh returns the value of SolarMwh.
+func (s *SubsystemSplit) GetSolarMwh() Energy {
+	return s.SolarMwh
+}
+
+// SetSubsystem sets the value of Subsystem.
+func (s *SubsystemSplit) SetSubsystem(val Subsystem) {
+	s.Subsystem = val
+}
+
+// SetWindMwh sets the value of WindMwh.
+func (s *SubsystemSplit) SetWindMwh(val Energy) {
+	s.WindMwh = val
+}
+
+// SetSolarMwh sets the value of SolarMwh.
+func (s *SubsystemSplit) SetSolarMwh(val Energy) {
+	s.SolarMwh = val
+}
+
 type Threshold int32
+
+// Merged schema.
+// Ref: #/components/schemas/WatchedAlert
+type WatchedAlert struct {
+	ID           uuid.UUID `json:"id"`
+	Name         AlertName `json:"name"`
+	Source       Source    `json:"source"`
+	Subsystem    Subsystem `json:"subsystem"`
+	ThresholdMwh Threshold `json:"thresholdMwh"`
+	CreatedAt    time.Time `json:"createdAt"`
+	// The latest day it fired. Left out if it never has.
+	LastFiredOn OptDay `json:"lastFiredOn"`
+	// The days it fired in the 30 up to the latest published.
+	DaysFired int32 `json:"daysFired"`
+}
+
+// GetID returns the value of ID.
+func (s *WatchedAlert) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *WatchedAlert) GetName() AlertName {
+	return s.Name
+}
+
+// GetSource returns the value of Source.
+func (s *WatchedAlert) GetSource() Source {
+	return s.Source
+}
+
+// GetSubsystem returns the value of Subsystem.
+func (s *WatchedAlert) GetSubsystem() Subsystem {
+	return s.Subsystem
+}
+
+// GetThresholdMwh returns the value of ThresholdMwh.
+func (s *WatchedAlert) GetThresholdMwh() Threshold {
+	return s.ThresholdMwh
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *WatchedAlert) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetLastFiredOn returns the value of LastFiredOn.
+func (s *WatchedAlert) GetLastFiredOn() OptDay {
+	return s.LastFiredOn
+}
+
+// GetDaysFired returns the value of DaysFired.
+func (s *WatchedAlert) GetDaysFired() int32 {
+	return s.DaysFired
+}
+
+// SetID sets the value of ID.
+func (s *WatchedAlert) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *WatchedAlert) SetName(val AlertName) {
+	s.Name = val
+}
+
+// SetSource sets the value of Source.
+func (s *WatchedAlert) SetSource(val Source) {
+	s.Source = val
+}
+
+// SetSubsystem sets the value of Subsystem.
+func (s *WatchedAlert) SetSubsystem(val Subsystem) {
+	s.Subsystem = val
+}
+
+// SetThresholdMwh sets the value of ThresholdMwh.
+func (s *WatchedAlert) SetThresholdMwh(val Threshold) {
+	s.ThresholdMwh = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *WatchedAlert) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetLastFiredOn sets the value of LastFiredOn.
+func (s *WatchedAlert) SetLastFiredOn(val OptDay) {
+	s.LastFiredOn = val
+}
+
+// SetDaysFired sets the value of DaysFired.
+func (s *WatchedAlert) SetDaysFired(val int32) {
+	s.DaysFired = val
+}

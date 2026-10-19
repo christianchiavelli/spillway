@@ -73,12 +73,62 @@ func (UnimplementedHandler) GetCurrentSession(ctx context.Context) (r *CurrentSe
 	return r, ht.ErrNotImplemented
 }
 
+// GetCurtailment implements getCurtailment operation.
+//
+// The period is the day, the week from Monday or the calendar month that holds `date`, the latest day
+// published when it is left out. A day the data does not reach answers `404`.
+//
+// GET /v1/curtailment
+func (UnimplementedHandler) GetCurtailment(ctx context.Context, params GetCurtailmentParams) (r *Curtailment, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListAlerts implements listAlerts operation.
 //
 // An account holds at most 20 alerts, so the list is never paged.
 //
 // GET /v1/alerts
 func (UnimplementedHandler) ListAlerts(ctx context.Context) (r *AlertList, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListDailyCurtailment implements listDailyCurtailment operation.
+//
+// Every source and subsystem, each with one figure a day, from the oldest day to the latest published.
+//
+// GET /v1/curtailment/days
+func (UnimplementedHandler) ListDailyCurtailment(ctx context.Context, params ListDailyCurtailmentParams) (r *DailyCurtailment, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListFirings implements listFirings operation.
+//
+// An alert fires on each day its source, in its subsystem, loses more energy than its threshold. The
+// days are the 30 up to the latest the ONS has published, read from the data as it stands: when the
+// ONS revises a day, its firings follow. Before any data is loaded the page is empty.
+//
+// GET /v1/alerts/firings
+func (UnimplementedHandler) ListFirings(ctx context.Context, params ListFiringsParams) (r *FiringPage, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListMonthlyCurtailment implements listMonthlyCurtailment operation.
+//
+// List every month the ONS has published, oldest first.
+//
+// GET /v1/curtailment/months
+func (UnimplementedHandler) ListMonthlyCurtailment(ctx context.Context) (r *MonthlyCurtailment, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListPlants implements listPlants operation.
+//
+// A plant can be one plant or a group of plants that share one connection to the grid, as the ONS
+// reports them. Only the plants that lost energy in the period are listed; `reporting` counts every
+// plant that reported.
+//
+// GET /v1/plants
+func (UnimplementedHandler) ListPlants(ctx context.Context, params ListPlantsParams) (r *PlantRanking, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

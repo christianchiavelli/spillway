@@ -15,6 +15,7 @@ import (
 	googleuuid "github.com/google/uuid"
 
 	"github.com/christianchiavelli/spillway/services/api/internal/adapter/httpapi/oas"
+	"github.com/christianchiavelli/spillway/services/api/internal/app/alerting"
 	"github.com/christianchiavelli/spillway/services/api/internal/app/identity"
 	"github.com/christianchiavelli/spillway/services/api/internal/domain/alert"
 )
@@ -23,8 +24,9 @@ import (
 // consumer, so a handler test can stand in for it with a few lines.
 type Alerts interface {
 	Create(ctx context.Context, accountID uuid.UUID, d alert.Draft) (alert.Alert, error)
-	List(ctx context.Context, accountID uuid.UUID) ([]alert.Alert, error)
+	List(ctx context.Context, accountID uuid.UUID) ([]alerting.Watched, error)
 	Delete(ctx context.Context, accountID, alertID uuid.UUID) error
+	Firings(ctx context.Context, accountID uuid.UUID, limit, offset int) (alerting.FiringPage, error)
 }
 
 // Identity is what the edge asks of the identity use case.
@@ -39,6 +41,7 @@ type Identity interface {
 type handler struct {
 	alerts   Alerts
 	identity Identity
+	reports  Reports
 	logger   *slog.Logger
 }
 
@@ -114,11 +117,43 @@ func (h *handler) ListAlerts(ctx context.Context) (*oas.AlertList, error) {
 	if err != nil {
 		return nil, err
 	}
-	items := make([]oas.Alert, len(alerts))
-	for i, a := range alerts {
-		items[i] = toAlert(a)
+	items := make([]oas.WatchedAlert, len(alerts))
+	for i, w := range alerts {
+		a := toAlert(w.Alert)
+		items[i] = oas.WatchedAlert{
+			ID:           a.ID,
+			Name:         a.Name,
+			Source:       a.Source,
+			Subsystem:    a.Subsystem,
+			ThresholdMwh: a.ThresholdMwh,
+			CreatedAt:    a.CreatedAt,
+			LastFiredOn:  optDay(w.LastFiredOn),
+			DaysFired:    int32(w.DaysFired), //nolint:gosec // at most alert.RecentDays
+		}
 	}
 	return &oas.AlertList{Items: items}, nil
+}
+
+func (h *handler) ListFirings(ctx context.Context, params oas.ListFiringsParams) (*oas.FiringPage, error) {
+	p, err := principalFrom(ctx)
+	if err != nil {
+		return nil, err
+	}
+	page, err := h.alerts.Firings(ctx, p.AccountID, params.Limit.Or(10), params.Offset.Or(0))
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.FiringPage{From: optDay(page.From), Through: optDay(page.Through), Total: page.Total, Items: make([]oas.Firing, len(page.Items))}
+	for i, f := range page.Items {
+		out.Items[i] = oas.Firing{
+			AlertId:      googleuuid.UUID(f.AlertID),
+			AlertName:    oas.AlertName(f.AlertName),
+			Day:          oas.Day(f.Day),
+			CurtailedMwh: oas.Energy(f.CurtailedMWh),
+			ThresholdMwh: oas.Threshold(f.ThresholdMWh),
+		}
+	}
+	return out, nil
 }
 
 func (h *handler) CreateAlert(ctx context.Context, req *oas.NewAlert) (*oas.Alert, error) {

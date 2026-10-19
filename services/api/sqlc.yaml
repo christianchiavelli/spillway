@@ -17,3 +17,6 @@ sql:
             go_type: uuid.UUID
           - db_type: timestamptz
             go_type: time.Time
+          # A calendar day, as the domain keeps it: midnight UTC of the date.
+          - db_type: date
+            go_type: time.Time

@@ -6,11 +6,16 @@ package oas
 type OperationName = string
 
 const (
-	CreateAccountOperation        OperationName = "CreateAccount"
-	CreateAlertOperation          OperationName = "CreateAlert"
-	CreateSessionOperation        OperationName = "CreateSession"
-	DeleteAlertOperation          OperationName = "DeleteAlert"
-	DeleteCurrentSessionOperation OperationName = "DeleteCurrentSession"
-	GetCurrentSessionOperation    OperationName = "GetCurrentSession"
-	ListAlertsOperation           OperationName = "ListAlerts"
+	CreateAccountOperation          OperationName = "CreateAccount"
+	CreateAlertOperation            OperationName = "CreateAlert"
+	CreateSessionOperation          OperationName = "CreateSession"
+	DeleteAlertOperation            OperationName = "DeleteAlert"
+	DeleteCurrentSessionOperation   OperationName = "DeleteCurrentSession"
+	GetCurrentSessionOperation      OperationName = "GetCurrentSession"
+	GetCurtailmentOperation         OperationName = "GetCurtailment"
+	ListAlertsOperation             OperationName = "ListAlerts"
+	ListDailyCurtailmentOperation   OperationName = "ListDailyCurtailment"
+	ListFiringsOperation            OperationName = "ListFirings"
+	ListMonthlyCurtailmentOperation OperationName = "ListMonthlyCurtailment"
+	ListPlantsOperation             OperationName = "ListPlants"
 )

@@ -68,8 +68,167 @@ export const zAlert = z.object({
   createdAt: z.iso.datetime(),
 });
 
+/**
+ * A calendar day in Brasília
+ */
+export const zDay = z.iso.date();
+
+/**
+ * An alert, with what its threshold met in the data
+ */
+export const zWatchedAlert = zAlert.and(
+  z.object({
+    lastFiredOn: zDay.optional(),
+    daysFired: z.int().gte(0).lte(30),
+  }),
+);
+
 export const zAlertList = z.object({
-  items: z.array(zAlert).max(20),
+  items: z.array(zWatchedAlert).max(20),
+});
+
+/**
+ * Energy in MWh
+ */
+export const zEnergy = z.number();
+
+/**
+ * A day an alert's source, in its subsystem, lost more than its threshold
+ */
+export const zFiring = z.object({
+  alertId: z.uuid(),
+  alertName: zAlertName,
+  day: zDay,
+  curtailedMwh: zEnergy,
+  thresholdMwh: zThreshold,
+});
+
+export const zFiringPage = z.object({
+  from: zDay.optional(),
+  through: zDay.optional(),
+  total: z.int().gte(0),
+  items: z.array(zFiring).max(50),
+});
+
+/**
+ * `day`, `week`, from Monday to Sunday, or `month`, a calendar month.
+ * The day when left out.
+ *
+ */
+export const zPeriodKind = z.enum(['day', 'week', 'month']).default('day');
+
+/**
+ * A day, a week or a month, read up to the latest day published, and the
+ * span before it that it is compared with: as many days of the period
+ * before as this one has, so a week so far is compared with the same days
+ * of the week before.
+ *
+ */
+export const zPeriod = z.object({
+  kind: zPeriodKind,
+  start: zDay,
+  end: zDay,
+  through: zDay,
+  previousStart: zDay.optional(),
+  previousEnd: zDay.optional(),
+  earlier: zDay.optional(),
+  later: zDay.optional(),
+});
+
+/**
+ * Why the ONS limited a plant, as it codes it: `ENE` the plants could
+ * make more than the grid was using, `CNF` held back to keep the grid
+ * reliable, `REL` equipment outside the plant, mostly transmission, could
+ * not carry it, `PAR` a limit set in the plant's terms of connection.
+ *
+ */
+export const zReason = z.enum(['ENE', 'CNF', 'REL', 'PAR']);
+
+/**
+ * What a source generated, and what the ONS kept it from generating
+ */
+export const zSourceEnergy = z.object({
+  curtailedMwh: zEnergy,
+  generatedMwh: zEnergy,
+});
+
+/**
+ * A half hour or a day, and what each source lost in it
+ */
+export const zSlot = z.object({
+  start: z.iso.datetime(),
+  windMwh: zEnergy,
+  solarMwh: zEnergy,
+});
+
+export const zSubsystemSplit = z.object({
+  subsystem: zSubsystem,
+  windMwh: zEnergy,
+  solarMwh: zEnergy,
+});
+
+export const zReasonSplit = z.object({
+  reason: zReason,
+  windMwh: zEnergy,
+  solarMwh: zEnergy,
+});
+
+export const zCurtailment = z.object({
+  period: zPeriod,
+  publishedThrough: z.iso.datetime(),
+  wind: zSourceEnergy,
+  solar: zSourceEnergy,
+  previousCurtailedMwh: zEnergy.optional(),
+  plantsLimited: z.int().gte(0),
+  plantsReporting: z.int().gte(0),
+  series: z.array(zSlot).max(48),
+  bySubsystem: z.array(zSubsystemSplit).max(4),
+  byReason: z.array(zReasonSplit).max(4),
+});
+
+/**
+ * A plant's period
+ */
+export const zPlantCurtailment = z.object({
+  id: z.string(),
+  name: z.string(),
+  state: z.string(),
+  subsystem: zSubsystem,
+  source: zSource,
+  curtailedMwh: zEnergy,
+  generatedMwh: zEnergy,
+  limitedMinutes: z.int().gte(0).lte(44640),
+});
+
+export const zPlantRanking = z.object({
+  period: zPeriod,
+  publishedThrough: z.iso.datetime(),
+  reporting: z.int().gte(0),
+  total: z.int().gte(0),
+  items: z.array(zPlantCurtailment).max(50),
+});
+
+export const zMonthCurtailment = z.object({
+  month: zDay,
+  wind: zSourceEnergy.optional(),
+  solar: zSourceEnergy.optional(),
+});
+
+export const zMonthlyCurtailment = z.object({
+  publishedThrough: z.iso.datetime(),
+  months: z.array(zMonthCurtailment),
+});
+
+export const zSubsystemDays = z.object({
+  source: zSource,
+  subsystem: zSubsystem,
+  curtailedMwh: z.array(zEnergy).max(90),
+});
+
+export const zDailyCurtailment = z.object({
+  from: zDay,
+  to: zDay,
+  series: z.array(zSubsystemDays).max(8),
 });
 
 /**
@@ -90,6 +249,7 @@ export const zProblemCode = z.enum([
   'request_too_large',
   'unsupported_media_type',
   'rate_limited',
+  'data_unavailable',
   'internal',
 ]);
 
@@ -106,6 +266,21 @@ export const zProblem = z.object({
   code: zProblemCode,
   errors: z.array(zFieldError).optional(),
 });
+
+/**
+ * How long the period runs
+ */
+export const zPeriod2 = zPeriodKind;
+
+/**
+ * A day in the period. The latest day published when left out.
+ */
+export const zDate = zDay;
+
+/**
+ * How many items to skip
+ */
+export const zOffset = z.int().gte(0).lte(100000).default(0);
 
 export const zCreateAccountBody = zNewAccount;
 
@@ -125,8 +300,41 @@ export const zCreateAlertBody = zNewAlert;
 
 export const zCreateAlertResponse = z.union([zAlert, zProblem]);
 
+export const zListFiringsQuery = z.object({
+  limit: z.int().gte(1).lte(50).optional().default(10),
+  offset: z.int().gte(0).lte(100000).optional().default(0),
+});
+
+export const zListFiringsResponse = z.union([zFiringPage, zProblem]);
+
 export const zDeleteAlertPath = z.object({
   alertId: z.uuid(),
 });
 
 export const zDeleteAlertResponse = z.union([z.void(), zProblem]);
+
+export const zGetCurtailmentQuery = z.object({
+  period: zPeriodKind.optional(),
+  date: zDay.optional(),
+});
+
+export const zGetCurtailmentResponse = z.union([zCurtailment, zProblem]);
+
+export const zListMonthlyCurtailmentResponse = z.union([zMonthlyCurtailment, zProblem]);
+
+export const zListDailyCurtailmentQuery = z.object({
+  days: z.int().gte(1).lte(90).optional().default(30),
+});
+
+export const zListDailyCurtailmentResponse = z.union([zDailyCurtailment, zProblem]);
+
+export const zListPlantsQuery = z.object({
+  period: zPeriodKind.optional(),
+  date: zDay.optional(),
+  source: zSource.optional(),
+  subsystem: zSubsystem.optional(),
+  limit: z.int().gte(1).lte(50).optional().default(20),
+  offset: z.int().gte(0).lte(100000).optional().default(0),
+});
+
+export const zListPlantsResponse = z.union([zPlantRanking, zProblem]);

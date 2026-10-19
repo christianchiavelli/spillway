@@ -18,6 +18,9 @@ var (
 		"GET":  "Authorization",
 		"POST": "Authorization,Content-Type",
 	}
+	rn11AllowedHeaders = map[string]string{
+		"GET": "Authorization",
+	}
 	rn7AllowedHeaders = map[string]string{
 		"DELETE": "Authorization",
 	}
@@ -152,6 +155,37 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							break
 						}
 
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'f': // Prefix: "firings"
+							origElem := elem
+							if l := len("firings"); len(elem) >= l && elem[0:l] == "firings" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleListFiringsRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, notAllowedParams{
+										allowedMethods: "GET",
+										allowedHeaders: rn11AllowedHeaders,
+										acceptPost:     "",
+										acceptPatch:    "",
+									})
+								}
+
+								return
+							}
+
+							elem = origElem
+						}
 						// Param: "alertId"
 						// Leaf parameter, slashes are prohibited
 						idx := strings.IndexByte(elem, '/')
@@ -182,6 +216,121 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 					}
 
+				}
+
+			case 'c': // Prefix: "curtailment"
+
+				if l := len("curtailment"); len(elem) >= l && elem[0:l] == "curtailment" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch r.Method {
+					case "GET":
+						s.handleGetCurtailmentRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "GET",
+							allowedHeaders: nil,
+							acceptPost:     "",
+							acceptPatch:    "",
+						})
+					}
+
+					return
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'd': // Prefix: "days"
+
+						if l := len("days"); len(elem) >= l && elem[0:l] == "days" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleListDailyCurtailmentRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, notAllowedParams{
+									allowedMethods: "GET",
+									allowedHeaders: nil,
+									acceptPost:     "",
+									acceptPatch:    "",
+								})
+							}
+
+							return
+						}
+
+					case 'm': // Prefix: "months"
+
+						if l := len("months"); len(elem) >= l && elem[0:l] == "months" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleListMonthlyCurtailmentRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, notAllowedParams{
+									allowedMethods: "GET",
+									allowedHeaders: nil,
+									acceptPost:     "",
+									acceptPatch:    "",
+								})
+							}
+
+							return
+						}
+
+					}
+
+				}
+
+			case 'p': // Prefix: "plants"
+
+				if l := len("plants"); len(elem) >= l && elem[0:l] == "plants" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleListPlantsRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "GET",
+							allowedHeaders: nil,
+							acceptPost:     "",
+							acceptPatch:    "",
+						})
+					}
+
+					return
 				}
 
 			case 's': // Prefix: "sessions"
@@ -415,6 +564,37 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							break
 						}
 
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'f': // Prefix: "firings"
+							origElem := elem
+							if l := len("firings"); len(elem) >= l && elem[0:l] == "firings" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = ListFiringsOperation
+									r.summary = "List the days the account's alerts fired, newest first"
+									r.operationID = "listFirings"
+									r.operationGroup = ""
+									r.pathPattern = "/v1/alerts/firings"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
+							elem = origElem
+						}
 						// Param: "alertId"
 						// Leaf parameter, slashes are prohibited
 						idx := strings.IndexByte(elem, '/')
@@ -443,6 +623,121 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 
 					}
 
+				}
+
+			case 'c': // Prefix: "curtailment"
+
+				if l := len("curtailment"); len(elem) >= l && elem[0:l] == "curtailment" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "GET":
+						r.name = GetCurtailmentOperation
+						r.summary = "Read a period's curtailment, by source, time, subsystem and reason"
+						r.operationID = "getCurtailment"
+						r.operationGroup = ""
+						r.pathPattern = "/v1/curtailment"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'd': // Prefix: "days"
+
+						if l := len("days"); len(elem) >= l && elem[0:l] == "days" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = ListDailyCurtailmentOperation
+								r.summary = "List the latest days, by source and subsystem"
+								r.operationID = "listDailyCurtailment"
+								r.operationGroup = ""
+								r.pathPattern = "/v1/curtailment/days"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 'm': // Prefix: "months"
+
+						if l := len("months"); len(elem) >= l && elem[0:l] == "months" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = ListMonthlyCurtailmentOperation
+								r.summary = "List every month the ONS has published, oldest first"
+								r.operationID = "listMonthlyCurtailment"
+								r.operationGroup = ""
+								r.pathPattern = "/v1/curtailment/months"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					}
+
+				}
+
+			case 'p': // Prefix: "plants"
+
+				if l := len("plants"); len(elem) >= l && elem[0:l] == "plants" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = ListPlantsOperation
+						r.summary = "List the plants a period's limits cost energy, most first"
+						r.operationID = "listPlants"
+						r.operationGroup = ""
+						r.pathPattern = "/v1/plants"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
 				}
 
 			case 's': // Prefix: "sessions"

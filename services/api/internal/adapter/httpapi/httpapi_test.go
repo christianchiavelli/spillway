@@ -16,10 +16,12 @@ import (
 	"uuid"
 
 	"github.com/christianchiavelli/spillway/services/api/internal/adapter/httpapi"
+	"github.com/christianchiavelli/spillway/services/api/internal/app/alerting"
 	"github.com/christianchiavelli/spillway/services/api/internal/app/identity"
 	"github.com/christianchiavelli/spillway/services/api/internal/domain"
 	"github.com/christianchiavelli/spillway/services/api/internal/domain/account"
 	"github.com/christianchiavelli/spillway/services/api/internal/domain/alert"
+	"github.com/christianchiavelli/spillway/services/api/internal/domain/curtailment"
 	"github.com/christianchiavelli/spillway/services/api/internal/platform/logging"
 )
 
@@ -27,7 +29,7 @@ const token = "a-valid-session-token"
 
 var (
 	ana      = identity.Principal{AccountID: uuid.NewV7(), Email: "ana@example.com", ExpiresAt: time.Date(2026, 10, 24, 12, 0, 0, 0, time.UTC)}
-	anAlert  = alert.Alert{ID: uuid.NewV7(), AccountID: ana.AccountID, Name: "Wind in the Northeast", Source: alert.Wind, Subsystem: alert.Northeast, ThresholdMWh: 500, CreatedAt: time.Date(2026, 10, 17, 12, 0, 0, 0, time.UTC)}
+	anAlert  = alert.Alert{ID: uuid.NewV7(), AccountID: ana.AccountID, Name: "Wind in the Northeast", Source: curtailment.Wind, Subsystem: curtailment.Northeast, ThresholdMWh: 500, CreatedAt: time.Date(2026, 10, 17, 12, 0, 0, 0, time.UTC)}
 	validNew = `{"name":"Wind in the Northeast","source":"wind","subsystem":"NE","thresholdMwh":500}`
 )
 
@@ -261,7 +263,7 @@ func TestBrowsersAreTurnedAway(t *testing.T) {
 		t.Error("a refused origin got CORS headers")
 	}
 
-	allowed := httptest.NewServer(must(httpapi.New(&fakeAlerts{}, &fakeIdentity{}, options(func(o *httpapi.Options) {
+	allowed := httptest.NewServer(must(httpapi.New(useCases(&fakeAlerts{}, &fakeIdentity{}), options(func(o *httpapi.Options) {
 		o.AllowedOrigins = []string{"http://localhost:5173"}
 	}))))
 	t.Cleanup(allowed.Close)
@@ -286,9 +288,9 @@ func TestUnknownRoutesAndMethods(t *testing.T) {
 
 func TestAPanicIsAnsweredAndLogged(t *testing.T) {
 	var logs strings.Builder
-	srv := httptest.NewServer(must(httpapi.New(&fakeAlerts{list: func(context.Context, uuid.UUID) ([]alert.Alert, error) {
+	srv := httptest.NewServer(must(httpapi.New(useCases(&fakeAlerts{list: func(context.Context, uuid.UUID) ([]alerting.Watched, error) {
 		panic("boom")
-	}}, &fakeIdentity{}, options(func(o *httpapi.Options) {
+	}}, &fakeIdentity{}), options(func(o *httpapi.Options) {
 		o.Logger = must(logging.New(&logs, "text", slog.LevelInfo))
 	}))))
 	t.Cleanup(srv.Close)
@@ -322,9 +324,18 @@ func newServer(t *testing.T, alerts *fakeAlerts, ident *fakeIdentity) *httptest.
 	if ident == nil {
 		ident = &fakeIdentity{}
 	}
-	srv := httptest.NewServer(must(httpapi.New(alerts, ident, options())))
+	return serve(t, useCases(alerts, ident))
+}
+
+func serve(t *testing.T, uc httpapi.UseCases) *httptest.Server {
+	t.Helper()
+	srv := httptest.NewServer(must(httpapi.New(uc, options())))
 	t.Cleanup(srv.Close)
 	return srv
+}
+
+func useCases(alerts *fakeAlerts, ident *fakeIdentity) httpapi.UseCases {
+	return httpapi.UseCases{Alerts: alerts, Identity: ident, Reports: &fakeReports{}}
 }
 
 func do(t *testing.T, srv *httptest.Server, method, path, body string, headers ...string) (*http.Response, map[string]any) {
@@ -381,9 +392,10 @@ func must[T any](v T, err error) T {
 }
 
 type fakeAlerts struct {
-	create func(context.Context, uuid.UUID, alert.Draft) (alert.Alert, error)
-	list   func(context.Context, uuid.UUID) ([]alert.Alert, error)
-	delete func(context.Context, uuid.UUID, uuid.UUID) error
+	create  func(context.Context, uuid.UUID, alert.Draft) (alert.Alert, error)
+	list    func(context.Context, uuid.UUID) ([]alerting.Watched, error)
+	delete  func(context.Context, uuid.UUID, uuid.UUID) error
+	firings func(context.Context, uuid.UUID, int, int) (alerting.FiringPage, error)
 }
 
 func (f *fakeAlerts) Create(ctx context.Context, owner uuid.UUID, d alert.Draft) (alert.Alert, error) {
@@ -393,11 +405,18 @@ func (f *fakeAlerts) Create(ctx context.Context, owner uuid.UUID, d alert.Draft)
 	return f.create(ctx, owner, d)
 }
 
-func (f *fakeAlerts) List(ctx context.Context, owner uuid.UUID) ([]alert.Alert, error) {
+func (f *fakeAlerts) List(ctx context.Context, owner uuid.UUID) ([]alerting.Watched, error) {
 	if f.list == nil {
-		return []alert.Alert{anAlert}, nil
+		return []alerting.Watched{{Alert: anAlert}}, nil
 	}
 	return f.list(ctx, owner)
+}
+
+func (f *fakeAlerts) Firings(ctx context.Context, owner uuid.UUID, limit, offset int) (alerting.FiringPage, error) {
+	if f.firings == nil {
+		return alerting.FiringPage{}, nil
+	}
+	return f.firings(ctx, owner, limit, offset)
 }
 
 func (f *fakeAlerts) Delete(ctx context.Context, owner, id uuid.UUID) error {

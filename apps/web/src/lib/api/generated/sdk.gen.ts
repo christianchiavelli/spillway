@@ -21,9 +21,24 @@ import type {
   GetCurrentSessionData,
   GetCurrentSessionErrors,
   GetCurrentSessionResponses,
+  GetCurtailmentData,
+  GetCurtailmentErrors,
+  GetCurtailmentResponses,
   ListAlertsData,
   ListAlertsErrors,
   ListAlertsResponses,
+  ListDailyCurtailmentData,
+  ListDailyCurtailmentErrors,
+  ListDailyCurtailmentResponses,
+  ListFiringsData,
+  ListFiringsErrors,
+  ListFiringsResponses,
+  ListMonthlyCurtailmentData,
+  ListMonthlyCurtailmentErrors,
+  ListMonthlyCurtailmentResponses,
+  ListPlantsData,
+  ListPlantsErrors,
+  ListPlantsResponses,
 } from './types.gen';
 
 export type Options<
@@ -153,6 +168,24 @@ export const createAlert = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * List the days the account's alerts fired, newest first
+ *
+ * An alert fires on each day its source, in its subsystem, loses more
+ * energy than its threshold. The days are the 30 up to the latest the ONS
+ * has published, read from the data as it stands: when the ONS revises a
+ * day, its firings follow. Before any data is loaded the page is empty.
+ *
+ */
+export const listFirings = <ThrowOnError extends boolean = false>(
+  options?: Options<ListFiringsData, ThrowOnError>,
+): RequestResult<ListFiringsResponses, ListFiringsErrors, ThrowOnError> =>
+  (options?.client ?? client).get<ListFiringsResponses, ListFiringsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/alerts/firings',
+    ...options,
+  });
+
+/**
  * Delete an alert
  *
  * Another account's alert answers `404`, as if it did not exist.
@@ -163,5 +196,65 @@ export const deleteAlert = <ThrowOnError extends boolean = false>(
   (options.client ?? client).delete<DeleteAlertResponses, DeleteAlertErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/alerts/{alertId}',
+    ...options,
+  });
+
+/**
+ * Read a period's curtailment, by source, time, subsystem and reason
+ *
+ * The period is the day, the week from Monday or the calendar month that
+ * holds `date`, the latest day published when it is left out. A day the
+ * data does not reach answers `404`.
+ *
+ */
+export const getCurtailment = <ThrowOnError extends boolean = false>(
+  options?: Options<GetCurtailmentData, ThrowOnError>,
+): RequestResult<GetCurtailmentResponses, GetCurtailmentErrors, ThrowOnError> =>
+  (options?.client ?? client).get<GetCurtailmentResponses, GetCurtailmentErrors, ThrowOnError>({
+    url: '/v1/curtailment',
+    ...options,
+  });
+
+/**
+ * List every month the ONS has published, oldest first
+ */
+export const listMonthlyCurtailment = <ThrowOnError extends boolean = false>(
+  options?: Options<ListMonthlyCurtailmentData, ThrowOnError>,
+): RequestResult<ListMonthlyCurtailmentResponses, ListMonthlyCurtailmentErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    ListMonthlyCurtailmentResponses,
+    ListMonthlyCurtailmentErrors,
+    ThrowOnError
+  >({ url: '/v1/curtailment/months', ...options });
+
+/**
+ * List the latest days, by source and subsystem
+ *
+ * Every source and subsystem, each with one figure a day, from the oldest
+ * day to the latest published.
+ *
+ */
+export const listDailyCurtailment = <ThrowOnError extends boolean = false>(
+  options?: Options<ListDailyCurtailmentData, ThrowOnError>,
+): RequestResult<ListDailyCurtailmentResponses, ListDailyCurtailmentErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    ListDailyCurtailmentResponses,
+    ListDailyCurtailmentErrors,
+    ThrowOnError
+  >({ url: '/v1/curtailment/days', ...options });
+
+/**
+ * List the plants a period's limits cost energy, most first
+ *
+ * A plant can be one plant or a group of plants that share one connection
+ * to the grid, as the ONS reports them. Only the plants that lost energy
+ * in the period are listed; `reporting` counts every plant that reported.
+ *
+ */
+export const listPlants = <ThrowOnError extends boolean = false>(
+  options?: Options<ListPlantsData, ThrowOnError>,
+): RequestResult<ListPlantsResponses, ListPlantsErrors, ThrowOnError> =>
+  (options?.client ?? client).get<ListPlantsResponses, ListPlantsErrors, ThrowOnError>({
+    url: '/v1/plants',
     ...options,
   });

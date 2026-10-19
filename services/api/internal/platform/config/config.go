@@ -26,6 +26,8 @@ type Config struct {
 	ShutdownTimeout  time.Duration // SHUTDOWN_TIMEOUT, 20s: how long requests in flight get to finish
 	HashConcurrency  int           // PASSWORD_HASH_CONCURRENCY, the number of CPUs
 	OTLPEndpoint     string        // OTEL_EXPORTER_OTLP_ENDPOINT, none: traces are exported only when set
+	ONSURL           string        // ONS_URL, the ONS's open data bucket: where sync reads the files
+	SyncInterval     time.Duration // SYNC_INTERVAL, 1h: how often sync looks for new files; 0 runs once
 }
 
 // Load reads the environment through getenv, which tests replace with a map.
@@ -44,6 +46,11 @@ func Load(getenv func(string) string) (Config, error) {
 		ShutdownTimeout:  r.duration("SHUTDOWN_TIMEOUT", 20*time.Second),
 		HashConcurrency:  r.integer("PASSWORD_HASH_CONCURRENCY", runtime.NumCPU(), 1, 1024),
 		OTLPEndpoint:     r.str("OTEL_EXPORTER_OTLP_ENDPOINT", ""),
+		ONSURL:           r.str("ONS_URL", "https://ons-aws-prod-opendata.s3.amazonaws.com"),
+		SyncInterval:     r.duration("SYNC_INTERVAL", time.Hour),
+	}
+	if !strings.HasPrefix(c.ONSURL, "https://") && !strings.HasPrefix(c.ONSURL, "http://") {
+		r.errs = append(r.errs, fmt.Errorf("ONS_URL: %q is not an http or https URL", c.ONSURL))
 	}
 	for _, origin := range c.AllowedOrigins {
 		if origin == "*" || !strings.Contains(origin, "://") || strings.HasSuffix(origin, "/") {

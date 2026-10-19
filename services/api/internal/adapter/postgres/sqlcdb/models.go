@@ -7,6 +7,7 @@ package sqlcdb
 import (
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"uuid"
 )
 
@@ -27,9 +28,59 @@ type Alert struct {
 	CreatedAt    time.Time
 }
 
+type HalfHour struct {
+	StartsAt     time.Time
+	Source       string
+	CurtailedMwh float64
+}
+
+type OnsFile struct {
+	Key         string
+	Source      string
+	Month       time.Time
+	Etag        string
+	Records     int32
+	LastInstant pgtype.Timestamptz
+	LoadedAt    time.Time
+}
+
+type Plant struct {
+	ID        string
+	Name      string
+	State     string
+	Subsystem string
+	Source    string
+	LastSeen  time.Time
+}
+
+type PlantDay struct {
+	Day            time.Time
+	PlantID        string
+	Source         string
+	Subsystem      string
+	CurtailedMwh   float64
+	GeneratedMwh   float64
+	LimitedMinutes int32
+}
+
+type ReasonDay struct {
+	Day          time.Time
+	Source       string
+	Reason       string
+	CurtailedMwh float64
+}
+
 type Session struct {
 	TokenHash []byte
 	AccountID uuid.UUID
 	CreatedAt time.Time
 	ExpiresAt time.Time
+}
+
+type SubsystemDay struct {
+	Source       string
+	Subsystem    string
+	Day          time.Time
+	CurtailedMwh float64
+	GeneratedMwh float64
 }

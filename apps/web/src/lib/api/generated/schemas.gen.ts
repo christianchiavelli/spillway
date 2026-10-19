@@ -164,6 +164,32 @@ export const AlertSchema = {
   },
 } as const;
 
+export const WatchedAlertSchema = {
+  description: 'An alert, with what its threshold met in the data',
+  allOf: [
+    {
+      $ref: '#/components/schemas/Alert',
+    },
+    {
+      type: 'object',
+      required: ['daysFired'],
+      properties: {
+        lastFiredOn: {
+          description: 'The latest day it fired. Left out if it never has.',
+          $ref: '#/components/schemas/Day',
+        },
+        daysFired: {
+          description: 'The days it fired in the 30 up to the latest published',
+          type: 'integer',
+          format: 'int32',
+          minimum: 0,
+          maximum: 30,
+        },
+      },
+    },
+  ],
+} as const;
+
 export const AlertListSchema = {
   type: 'object',
   required: ['items'],
@@ -172,7 +198,414 @@ export const AlertListSchema = {
       type: 'array',
       maxItems: 20,
       items: {
-        $ref: '#/components/schemas/Alert',
+        $ref: '#/components/schemas/WatchedAlert',
+      },
+    },
+  },
+} as const;
+
+export const FiringSchema = {
+  description: "A day an alert's source, in its subsystem, lost more than its threshold",
+  type: 'object',
+  required: ['alertId', 'alertName', 'day', 'curtailedMwh', 'thresholdMwh'],
+  properties: {
+    alertId: {
+      type: 'string',
+      format: 'uuid',
+    },
+    alertName: {
+      $ref: '#/components/schemas/AlertName',
+    },
+    day: {
+      $ref: '#/components/schemas/Day',
+    },
+    curtailedMwh: {
+      $ref: '#/components/schemas/Energy',
+    },
+    thresholdMwh: {
+      $ref: '#/components/schemas/Threshold',
+    },
+  },
+} as const;
+
+export const FiringPageSchema = {
+  type: 'object',
+  required: ['total', 'items'],
+  properties: {
+    from: {
+      description: 'The first day the firings cover. Left out before any data is loaded.',
+      $ref: '#/components/schemas/Day',
+    },
+    through: {
+      description: 'The last day the firings cover, the latest published',
+      $ref: '#/components/schemas/Day',
+    },
+    total: {
+      description: 'The firings in all the days, on every page',
+      type: 'integer',
+      minimum: 0,
+    },
+    items: {
+      type: 'array',
+      maxItems: 50,
+      items: {
+        $ref: '#/components/schemas/Firing',
+      },
+    },
+  },
+} as const;
+
+export const DaySchema = {
+  description: 'A calendar day in Brasília',
+  type: 'string',
+  format: 'date',
+  examples: ['2026-10-16'],
+} as const;
+
+export const EnergySchema = {
+  description: 'Energy in MWh',
+  type: 'number',
+  format: 'double',
+} as const;
+
+export const PeriodKindSchema = {
+  description:
+    '`day`, `week`, from Monday to Sunday, or `month`, a calendar month.\nThe day when left out.\n',
+  type: 'string',
+  enum: ['day', 'week', 'month'],
+  default: 'day',
+} as const;
+
+export const PeriodSchema = {
+  description:
+    'A day, a week or a month, read up to the latest day published, and the\nspan before it that it is compared with: as many days of the period\nbefore as this one has, so a week so far is compared with the same days\nof the week before.\n',
+  type: 'object',
+  required: ['kind', 'start', 'end', 'through'],
+  properties: {
+    kind: {
+      $ref: '#/components/schemas/PeriodKind',
+    },
+    start: {
+      $ref: '#/components/schemas/Day',
+    },
+    end: {
+      description: 'The last day, which may not be published yet',
+      $ref: '#/components/schemas/Day',
+    },
+    through: {
+      description: 'The last day with data, `end` or the latest published',
+      $ref: '#/components/schemas/Day',
+    },
+    previousStart: {
+      description: 'The first day compared with. Left out where the data does not reach.',
+      $ref: '#/components/schemas/Day',
+    },
+    previousEnd: {
+      $ref: '#/components/schemas/Day',
+    },
+    earlier: {
+      description: 'A day of the period before. Left out where the data does not reach.',
+      $ref: '#/components/schemas/Day',
+    },
+    later: {
+      description: 'A day of the period after. Left out until it is published.',
+      $ref: '#/components/schemas/Day',
+    },
+  },
+} as const;
+
+export const ReasonSchema = {
+  description:
+    "Why the ONS limited a plant, as it codes it: `ENE` the plants could\nmake more than the grid was using, `CNF` held back to keep the grid\nreliable, `REL` equipment outside the plant, mostly transmission, could\nnot carry it, `PAR` a limit set in the plant's terms of connection.\n",
+  type: 'string',
+  enum: ['ENE', 'CNF', 'REL', 'PAR'],
+} as const;
+
+export const SourceEnergySchema = {
+  description: 'What a source generated, and what the ONS kept it from generating',
+  type: 'object',
+  required: ['curtailedMwh', 'generatedMwh'],
+  properties: {
+    curtailedMwh: {
+      $ref: '#/components/schemas/Energy',
+    },
+    generatedMwh: {
+      $ref: '#/components/schemas/Energy',
+    },
+  },
+} as const;
+
+export const SlotSchema = {
+  description: 'A half hour or a day, and what each source lost in it',
+  type: 'object',
+  required: ['start', 'windMwh', 'solarMwh'],
+  properties: {
+    start: {
+      type: 'string',
+      format: 'date-time',
+    },
+    windMwh: {
+      $ref: '#/components/schemas/Energy',
+    },
+    solarMwh: {
+      $ref: '#/components/schemas/Energy',
+    },
+  },
+} as const;
+
+export const SubsystemSplitSchema = {
+  type: 'object',
+  required: ['subsystem', 'windMwh', 'solarMwh'],
+  properties: {
+    subsystem: {
+      $ref: '#/components/schemas/Subsystem',
+    },
+    windMwh: {
+      $ref: '#/components/schemas/Energy',
+    },
+    solarMwh: {
+      $ref: '#/components/schemas/Energy',
+    },
+  },
+} as const;
+
+export const ReasonSplitSchema = {
+  type: 'object',
+  required: ['reason', 'windMwh', 'solarMwh'],
+  properties: {
+    reason: {
+      $ref: '#/components/schemas/Reason',
+    },
+    windMwh: {
+      $ref: '#/components/schemas/Energy',
+    },
+    solarMwh: {
+      $ref: '#/components/schemas/Energy',
+    },
+  },
+} as const;
+
+export const CurtailmentSchema = {
+  type: 'object',
+  required: [
+    'period',
+    'publishedThrough',
+    'wind',
+    'solar',
+    'plantsLimited',
+    'plantsReporting',
+    'series',
+    'bySubsystem',
+    'byReason',
+  ],
+  properties: {
+    period: {
+      $ref: '#/components/schemas/Period',
+    },
+    publishedThrough: {
+      description: 'The start of the last half hour published',
+      type: 'string',
+      format: 'date-time',
+    },
+    wind: {
+      $ref: '#/components/schemas/SourceEnergy',
+    },
+    solar: {
+      $ref: '#/components/schemas/SourceEnergy',
+    },
+    previousCurtailedMwh: {
+      description: 'What both sources lost in the span compared with, when the period has one',
+      $ref: '#/components/schemas/Energy',
+    },
+    plantsLimited: {
+      description: 'The plants that lost energy in the period',
+      type: 'integer',
+      minimum: 0,
+    },
+    plantsReporting: {
+      description: 'The plants that reported in the period',
+      type: 'integer',
+      minimum: 0,
+    },
+    series: {
+      description:
+        'The half hours of a day, or the days of a week or a month, from the\nfirst to the latest published\n',
+      type: 'array',
+      maxItems: 48,
+      items: {
+        $ref: '#/components/schemas/Slot',
+      },
+    },
+    bySubsystem: {
+      description: 'All four subsystems',
+      type: 'array',
+      maxItems: 4,
+      items: {
+        $ref: '#/components/schemas/SubsystemSplit',
+      },
+    },
+    byReason: {
+      description: 'The reasons the ONS gave in the period',
+      type: 'array',
+      maxItems: 4,
+      items: {
+        $ref: '#/components/schemas/ReasonSplit',
+      },
+    },
+  },
+} as const;
+
+export const PlantCurtailmentSchema = {
+  description: "A plant's period",
+  type: 'object',
+  required: [
+    'id',
+    'name',
+    'state',
+    'subsystem',
+    'source',
+    'curtailedMwh',
+    'generatedMwh',
+    'limitedMinutes',
+  ],
+  properties: {
+    id: {
+      description: "The ONS's id for the plant or group",
+      type: 'string',
+    },
+    name: {
+      type: 'string',
+    },
+    state: {
+      description: 'The two letters of a Brazilian state',
+      type: 'string',
+    },
+    subsystem: {
+      $ref: '#/components/schemas/Subsystem',
+    },
+    source: {
+      $ref: '#/components/schemas/Source',
+    },
+    curtailedMwh: {
+      $ref: '#/components/schemas/Energy',
+    },
+    generatedMwh: {
+      $ref: '#/components/schemas/Energy',
+    },
+    limitedMinutes: {
+      description: "The minutes the ONS held it under a limit, at most a month's",
+      type: 'integer',
+      format: 'int32',
+      minimum: 0,
+      maximum: 44640,
+    },
+  },
+} as const;
+
+export const PlantRankingSchema = {
+  type: 'object',
+  required: ['period', 'publishedThrough', 'reporting', 'total', 'items'],
+  properties: {
+    period: {
+      $ref: '#/components/schemas/Period',
+    },
+    publishedThrough: {
+      type: 'string',
+      format: 'date-time',
+    },
+    reporting: {
+      description: 'The plants that reported in the period',
+      type: 'integer',
+      minimum: 0,
+    },
+    total: {
+      description: 'The plants that lost energy, on every page',
+      type: 'integer',
+      minimum: 0,
+    },
+    items: {
+      type: 'array',
+      maxItems: 50,
+      items: {
+        $ref: '#/components/schemas/PlantCurtailment',
+      },
+    },
+  },
+} as const;
+
+export const MonthCurtailmentSchema = {
+  type: 'object',
+  required: ['month'],
+  properties: {
+    month: {
+      description: "The month's first day",
+      $ref: '#/components/schemas/Day',
+    },
+    wind: {
+      description: 'Left out before the ONS published the source',
+      $ref: '#/components/schemas/SourceEnergy',
+    },
+    solar: {
+      description: 'Left out before the ONS published the source',
+      $ref: '#/components/schemas/SourceEnergy',
+    },
+  },
+} as const;
+
+export const MonthlyCurtailmentSchema = {
+  type: 'object',
+  required: ['publishedThrough', 'months'],
+  properties: {
+    publishedThrough: {
+      type: 'string',
+      format: 'date-time',
+    },
+    months: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/MonthCurtailment',
+      },
+    },
+  },
+} as const;
+
+export const SubsystemDaysSchema = {
+  type: 'object',
+  required: ['source', 'subsystem', 'curtailedMwh'],
+  properties: {
+    source: {
+      $ref: '#/components/schemas/Source',
+    },
+    subsystem: {
+      $ref: '#/components/schemas/Subsystem',
+    },
+    curtailedMwh: {
+      description: 'One figure a day, the oldest first',
+      type: 'array',
+      maxItems: 90,
+      items: {
+        $ref: '#/components/schemas/Energy',
+      },
+    },
+  },
+} as const;
+
+export const DailyCurtailmentSchema = {
+  type: 'object',
+  required: ['from', 'to', 'series'],
+  properties: {
+    from: {
+      $ref: '#/components/schemas/Day',
+    },
+    to: {
+      $ref: '#/components/schemas/Day',
+    },
+    series: {
+      description: 'Every source and subsystem',
+      type: 'array',
+      maxItems: 8,
+      items: {
+        $ref: '#/components/schemas/SubsystemDays',
       },
     },
   },
@@ -195,6 +628,7 @@ export const ProblemCodeSchema = {
     'request_too_large',
     'unsupported_media_type',
     'rate_limited',
+    'data_unavailable',
     'internal',
   ],
 } as const;

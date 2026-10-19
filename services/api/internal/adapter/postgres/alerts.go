@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 	"uuid"
 
 	"github.com/jackc/pgx/v5"
@@ -12,6 +13,7 @@ import (
 	"github.com/christianchiavelli/spillway/services/api/internal/adapter/postgres/sqlcdb"
 	"github.com/christianchiavelli/spillway/services/api/internal/domain"
 	"github.com/christianchiavelli/spillway/services/api/internal/domain/alert"
+	"github.com/christianchiavelli/spillway/services/api/internal/domain/curtailment"
 )
 
 // Alerts stores alerts. It implements alerting.Store.
@@ -81,8 +83,8 @@ func (s *Alerts) ListByAccount(ctx context.Context, accountID uuid.UUID) ([]aler
 			ID:           r.ID,
 			AccountID:    r.AccountID,
 			Name:         r.Name,
-			Source:       alert.Source(r.Source),
-			Subsystem:    alert.Subsystem(r.Subsystem),
+			Source:       curtailment.Source(r.Source),
+			Subsystem:    curtailment.Subsystem(r.Subsystem),
 			ThresholdMWh: r.ThresholdMwh,
 			CreatedAt:    r.CreatedAt.UTC(),
 		}
@@ -100,4 +102,48 @@ func (s *Alerts) Delete(ctx context.Context, accountID, alertID uuid.UUID) error
 		return domain.ErrNotFound
 	}
 	return nil
+}
+
+// Activity returns, for each of the account's alerts that ever fired, the last
+// day it did up to through, and on how many days from from it did.
+func (s *Alerts) Activity(ctx context.Context, accountID uuid.UUID, from, through time.Time) (map[uuid.UUID]alert.Activity, error) {
+	rows, err := s.q.AlertActivity(ctx, sqlcdb.AlertActivityParams{AccountID: accountID, FirstDay: from, LastDay: through})
+	if err != nil {
+		return nil, fmt.Errorf("select activity: %w", err)
+	}
+	out := make(map[uuid.UUID]alert.Activity, len(rows))
+	for _, r := range rows {
+		out[r.ID] = alert.Activity{LastFiredOn: r.LastFiredOn, DaysFired: int(r.DaysFired)}
+	}
+	return out, nil
+}
+
+// Firings returns a page of the days from from to through on which the
+// account's alerts fired, newest first, and how many there are in all.
+func (s *Alerts) Firings(ctx context.Context, accountID uuid.UUID, from, through time.Time, limit, offset int) ([]alert.Firing, int, error) {
+	var (
+		items []alert.Firing
+		total int64
+	)
+	err := pgx.BeginTxFunc(ctx, s.pool, snapshot, func(tx pgx.Tx) error {
+		q := s.q.WithTx(tx)
+		var err error
+		total, err = q.CountFirings(ctx, sqlcdb.CountFiringsParams{AccountID: accountID, FirstDay: from, LastDay: through})
+		if err != nil {
+			return fmt.Errorf("count firings: %w", err)
+		}
+		rows, err := q.ListFirings(ctx, sqlcdb.ListFiringsParams{
+			AccountID: accountID, FirstDay: from, LastDay: through,
+			RowLimit: int32(limit), RowOffset: int32(offset), //nolint:gosec // the contract caps both
+		})
+		if err != nil {
+			return fmt.Errorf("select firings: %w", err)
+		}
+		items = make([]alert.Firing, len(rows))
+		for i, r := range rows {
+			items[i] = alert.Firing{AlertID: r.AlertID, AlertName: r.AlertName, Day: r.Day, CurtailedMWh: r.CurtailedMwh, ThresholdMWh: r.ThresholdMwh}
+		}
+		return nil
+	})
+	return items, int(total), err
 }
