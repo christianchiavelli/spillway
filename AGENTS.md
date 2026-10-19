@@ -8,7 +8,8 @@ Alerts on how much wind and solar energy Brazil's grid operator keeps from being
 | --- | --- |
 | `contracts/openapi.yaml` | The API's contract, OpenAPI 3.1: both servers are generated from it (ADR 0002) |
 | `services/api` | The Go API: `domain`, `app`, `adapter` and `platform` under `internal`, wired by hand in `cmd/api` (ADR 0003) |
-| `apps/web` | The SvelteKit app: every page rendered on its server, the only thing a browser talks to (ADR 0001) |
+| `apps/web` | The SvelteKit app: every page rendered on its server, the only thing a browser talks to (ADR 0001), in English and under `/pt-br` in Portuguese (ADR 0026) |
+| `apps/web/messages` | Every text the app shows, `en.json` and `pt-BR.json`, compiled into `src/lib/paraglide`, which is not committed |
 | `e2e` | Playwright against the running stack: desktop, a phone, and JavaScript off |
 | `docs` | `architecture.md`, the decision records in `adr/`, the logo in `brand/` and the subsystems' map in `map/`, each with the script that draws it |
 
@@ -19,6 +20,7 @@ Alerts on how much wind and solar energy Brazil's grid operator keeps from being
 - `pnpm run ci`: format check, lint, types, unit and component tests in every package. Must pass before any change is done.
 - `pnpm exec prettier --write <paths>`: from the repository root, which holds the ignore file.
 - `pnpm --filter @spillway/web dev`: the web app on port 5173, against the API at `API_URL` (from `.env` in `apps/web`, e.g. `API_URL=http://localhost:8080`).
+- `pnpm --filter @spillway/web run i18n`: compiles the messages after a change to them; `install`, `typecheck` and the build run it too.
 - `pnpm --filter @spillway/web api:generate`: after any change to the contract. Commit what it writes under `src/lib/api/generated`; `pnpm run contract:check` fails while it is stale.
 - `pnpm run e2e`: the browser checks, against the stack compose started, once the sync has loaded every month. The first time, `pnpm --filter @spillway/e2e exec playwright install chromium` fetches the browser.
 - `pnpm run screenshots`: takes the README's screens again from the running stack, into `docs/screenshots`. Look at each before committing it.
@@ -61,7 +63,7 @@ The configuration is read once, at start, and every bad value is reported togeth
 - Svelte 5 runes, strict TypeScript, and no `$effect` to keep state in sync.
 - Tests sit next to what they test: `_test.go` in Go, `*.spec.ts` in TypeScript, `*.svelte.spec.ts` for components in a browser. Anything that needs Postgres runs against a real one, never a mock.
 - Comments explain why, at the line that needs it. No comments that restate the code.
-- Everything written in the repository is in English: code, docs, commit messages.
+- Everything written in the repository is in English: code, docs, commit messages. The one exception is what the app shows, which is a message in both `messages/en.json` and `messages/pt-BR.json`, never a string in a component; links and redirects go through `localized()` (ADR 0026).
 - Commits go straight to `main`, a title only: conventional, lowercase, imperative and short, like `fix(api): answer a wrong password with 400`.
 - A decision with a trade-off gets a record in `docs/adr`, version pins included.
 

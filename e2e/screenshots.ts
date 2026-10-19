@@ -146,6 +146,12 @@ const screens: Record<string, (browser: Browser) => Promise<Page>> = {
     return page;
   },
 
+  async 'overview-pt'(browser) {
+    const { page } = await open(browser);
+    await page.goto('/pt-br');
+    return page;
+  },
+
   async 'overview-phone'(browser) {
     const { page } = await open(browser, PHONE);
     await page.goto('/');

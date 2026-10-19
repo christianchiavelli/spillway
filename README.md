@@ -2,7 +2,7 @@
 
 Alerts on the wind and solar energy Brazil's grid operator keeps from being generated, built for [the ONS's open curtailment data](https://dados.ons.org.br).
 
-Spillway reads the ONS's files every hour and shows what was curtailed: a day, a week or a month against the one before, the plants that lost the most, and every month since the data begins. An account keeps up to twenty alerts, each a daily limit on one source in one subsystem: tell me when more than 150,000 MWh of Northeast wind goes unused in a day. Before an alert is saved, a chart shows the days of the last thirty it would have fired on.
+Spillway reads the ONS's files every hour and shows what was curtailed: a day, a week or a month against the one before, the plants that lost the most, and every month since the data begins. An account keeps up to twenty alerts, each a daily limit on one source in one subsystem: tell me when more than 150,000 MWh of Northeast wind goes unused in a day. Before an alert is saved, a chart shows the days of the last thirty it would have fired on. Every page is in English and, under `/pt-br`, in Brazilian Portuguese.
 
 SvelteKit 3 and Svelte 5 in front, a Go 1.27 API behind it, Postgres 18 behind that, and an OpenAPI 3.1 contract between the two servers that both are generated from.
 
@@ -57,6 +57,10 @@ SvelteKit 3 and Svelte 5 in front, a Go 1.27 API behind it, Postgres 18 behind t
 
 ![The alerts page on a phone: the New Alert button under the title, the alerts' table, and the days they fired below](docs/screenshots/alerts-phone.png)
 
+**In Portuguese**
+
+![The overview in Portuguese, under /pt-br: Domingo, 18 de outubro de 2026, 152 GWh curtailed, 64,5 GWh of wind and 87,4 GWh of solar with a decimal comma, the navigation as Visão geral, Usinas, Histórico and Alertas, and EN | PT in the header with PT underlined](docs/screenshots/overview-pt.png)
+
 **A sign-in refused**
 
 ![The sign-in page saying the email or the password is wrong, the address kept and the password cleared](docs/screenshots/sign-in-refused.png)
@@ -110,6 +114,7 @@ The ONS publishes it on its open data portal under CC-BY, plant by plant in half
 | `/alerts/new` | A new alert, with the last thirty days drawn against its threshold as it is typed |
 | `/sign-up` | An account: an email address and a password of 15 characters or more |
 | `/sign-in` | Signing in, and back to the page asked for |
+| `/pt-br/…` | Each of the above in Brazilian Portuguese, one link away in the header |
 
 ---
 
@@ -128,6 +133,7 @@ The ONS publishes it on its open data portal under CC-BY, plant by plant in half
 - **Firings read from the data.** An alert's firings are a query over the daily sums, not rows of their own, so a revised day revises them too ([ADR 0021](docs/adr/0021-firings-are-read-from-the-data.md)).
 - **Charts in our own SVG.** Columns, bars and lines are Svelte components on d3-scale, drawn on the server with no style attribute for the content security policy to refuse ([ADR 0022](docs/adr/0022-charts-drawn-in-our-own-svg.md)), and a switch in each card's header shows the chart's figures as a table in its place, with radio buttons and CSS, so it works without JavaScript ([ADR 0025](docs/adr/0025-a-chart-or-its-table-by-a-switch.md)).
 - **A map drawn from the data's own regions.** The four subsystems, joined from Natural Earth's states by where the ONS counts each state's plants, are shaded in the app's navy by what they lost, and pointing at one picks out its row in the ranking beside it ([ADR 0024](docs/adr/0024-a-map-of-the-subsystems-beside-their-ranking.md)).
+- **Two editions, chosen by the address.** English at the root and Portuguese under `/pt-br`, from messages Paraglide compiles into a function each, with numbers and dates as each country writes them; every link, form and redirect keeps the reader's edition, and a test fails while a message lacks its translation ([ADR 0026](docs/adr/0026-a-portuguese-edition-under-pt-br.md)).
 - **Observable, and gentle when it stops.** slog with a request id from the browser's page to the API's log line, OpenTelemetry metrics for Prometheus and traces over OTLP, readiness that turns off before the server drains and stops ([ADR 0011](docs/adr/0011-observability.md), [ADR 0012](docs/adr/0012-graceful-shutdown-with-a-drain.md)).
 
 ---

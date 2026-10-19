@@ -51,7 +51,8 @@ spillway/
 │   └── Dockerfile              a static binary on distroless
 ├── apps/web/                   SvelteKit 3: the pages
 │   ├── src/
-│   │   ├── hooks.server.ts     request id, security headers, the session on every request
+│   │   ├── hooks.ts            takes /pt-br off an address before routing (ADR 0026)
+│   │   ├── hooks.server.ts     request id, the edition, security headers, the session on every request
 │   │   ├── env.ts              API_URL, checked when the server starts
 │   │   ├── app.css             the design system's tokens and type styles
 │   │   ├── routes/             the overview (/), plants, history, alerts and a new one, signing in and out
@@ -61,7 +62,8 @@ spillway/
 │   │       ├── forms/          what every form does: field errors, and use:enhance's additions
 │   │       ├── features/       the domain's words for the screen: curtailment, alerts, account
 │   │       └── components/     ui/ (fields, buttons, tables, toasts), charts/ (SVG) and layout/
-│   ├── vite.config.ts          SvelteKit's options (CSP, CSRF, origin) and the Vitest projects
+│   ├── messages/               every text the app shows, en.json and pt-BR.json, compiled by Paraglide
+│   ├── vite.config.ts          SvelteKit's options (CSP, CSRF, origin), Paraglide, and the Vitest projects
 │   └── Dockerfile              adapter-node's output on Node
 ├── e2e/                        Playwright against the running stack: desktop, phone, no JavaScript
 ├── docs/                       this file, the decision records in adr/, the logo and the map
@@ -87,7 +89,7 @@ In the web app, the same idea in SvelteKit's terms (ADR 0014):
 | --- | --- | --- |
 | `routes/` | Reads in load functions, writes in form actions, picks components | Draws more than the page's layout |
 | `lib/server/` | Talks to the API and to cookies | Runs in a browser: SvelteKit refuses to bundle it |
-| `lib/features/` | Knows the domain's words: labels, messages, formats, limits | Fetches |
+| `lib/features/` | Knows the domain's words: labels, messages, formats, limits, in both editions | Fetches |
 | `lib/components/` | Draws, from props, and calls back | Knows what an alert is |
 
 ## One request, end to end: creating an alert
@@ -97,7 +99,7 @@ Someone fills in the form on `/alerts` and presses Create Alert.
 | Step | Where | What happens |
 | --- | --- | --- |
 | 1 | `routes/alerts/+page.svelte` | A `<form method="POST" action="?/create">`, which posts without JavaScript. With it, `enhanceForm` blocks a second submit and shows the pending state. |
-| 2 | `hooks.server.ts` | The request gets an id. The session cookie becomes `locals.session` after the API confirms it (`GET /v1/sessions/current`), and its deadline moves forward. |
+| 2 | `hooks.server.ts` | The request gets an id, and the edition its address names: `/pt-br/alerts` is the same route in Portuguese, and every message and link the request renders follows it. The session cookie becomes `locals.session` after the API confirms it (`GET /v1/sessions/current`), and its deadline moves forward. |
 | 3 | `routes/alerts/+page.server.ts` | The `create` action reads the form, and parses it with `zNewAlert`, generated from the contract. A broken rule answers 422 here, with the values as typed and an error per field, without calling the API. |
 | 4 | `lib/server/api.ts` | A client for this request alone: the bearer token, `X-Request-Id`, a five-second timeout. The answer is parsed with `zAlert` before anyone reads it. |
 | 5 | `httpapi/router.go` | Middleware, in order: request id, access log, panic recovery, API headers, origin check, body limit, deadline. |

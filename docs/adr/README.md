@@ -29,3 +29,4 @@ One file per decision that had a trade-off, version pins included. Each says wha
 | [0023](0023-toasts-under-the-page-header-leave-on-their-own.md) | Toasts under the page header, leaving on their own |
 | [0024](0024-a-map-of-the-subsystems-beside-their-ranking.md) | A map of the subsystems, beside their ranking |
 | [0025](0025-a-chart-or-its-table-by-a-switch.md) | A chart or its table, by a switch |
+| [0026](0026-a-portuguese-edition-under-pt-br.md) | A Portuguese edition, under /pt-br |
