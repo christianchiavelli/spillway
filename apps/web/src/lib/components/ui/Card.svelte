@@ -19,8 +19,13 @@
   aria-labelledby={`${id}-title`}
   class="flex flex-col gap-600 rounded-300 border border-stroke-neutral-default bg-surface-container-primary p-600"
 >
+  <!--
+    The title takes the room the aside leaves, so its description wraps first
+    and the aside drops under it only when the title would get narrower than
+    15rem.
+  -->
   <div class="flex flex-wrap items-start justify-between gap-500">
-    <div class="flex flex-col gap-100">
+    <div class="flex min-w-[min(100%,15rem)] flex-1 flex-col gap-100">
       <svelte:element
         this={`h${headingLevel}`}
         id={`${id}-title`}

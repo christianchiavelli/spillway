@@ -1,9 +1,8 @@
 <script lang="ts">
   import type { Curtailment } from '#lib/api/generated/types.gen.ts';
   import Columns from '#lib/components/charts/Columns.svelte';
+  import ChartCard from '#lib/components/charts/ChartCard.svelte';
   import Legend from '#lib/components/charts/Legend.svelte';
-  import ShowAsTable from '#lib/components/charts/ShowAsTable.svelte';
-  import Card from '#lib/components/ui/Card.svelte';
   import Table from '#lib/components/ui/Table.svelte';
 
   import { dayOfMonth, energy, int, longDay, one, shortDay, weekdayShort } from './format.ts';
@@ -57,13 +56,13 @@
   };
 </script>
 
-<Card
+<ChartCard
   title={byHalfHour ? 'Hour by Hour' : 'Day by Day'}
   description={byHalfHour
     ? 'Energy curtailed in each half hour, in megawatt hours (MWh)'
     : 'Energy curtailed each day, in gigawatt hours (GWh)'}
 >
-  {#snippet aside()}
+  {#snippet legend()}
     <Legend series={sources} />
   {/snippet}
 
@@ -83,7 +82,7 @@
     class="h-[13.75rem] mobile:h-[18.75rem]"
   />
 
-  <ShowAsTable>
+  {#snippet table()}
     <Table
       caption={byHalfHour
         ? `Energy curtailed in each half hour of ${title}, in MWh`
@@ -117,5 +116,5 @@
         {/each}
       {/if}
     </Table>
-  </ShowAsTable>
-</Card>
+  {/snippet}
+</ChartCard>

@@ -11,10 +11,24 @@
     required?: boolean;
     /** The first option's id, which a link to the field moves focus to. */
     id?: string;
+    /** Small, for a switch in a card's header. */
+    size?: 'md' | 'sm';
+    /** A legend only a screen reader needs, where the options say it all. */
+    hideLegend?: boolean;
   };
 
   const uid = $props.id();
-  let { legend, name, options, value, error, required = false, id = uid }: Props = $props();
+  let {
+    legend,
+    name,
+    options,
+    value,
+    error,
+    required = false,
+    id = uid,
+    size = 'md',
+    hideLegend = false,
+  }: Props = $props();
 
   const messageId = $derived(`${id}-message`);
 </script>
@@ -27,12 +41,12 @@
   click, a tap or a screen reader's touch lands on the radio itself.
 -->
 <fieldset
-  class="flex min-w-0 flex-col"
+  class="flex w-full min-w-0 flex-col mobile:w-auto"
   aria-describedby={error === undefined ? undefined : messageId}
 >
   <legend
     class={[
-      'mb-300 ts-primary-subheading-xs',
+      hideLegend ? 'sr-only' : 'mb-300 ts-primary-subheading-xs',
       error ? 'text-text-semantic-error' : 'text-text-secondary-default',
     ]}
   >
@@ -40,7 +54,8 @@
   </legend>
   <!--
     On a phone the pill fills its row in equal parts, so it lines up with the
-    fields under it; from the mobile breakpoint up it is as wide as its labels.
+    fields under it, or a card's switch with the title over it; from the
+    mobile breakpoint up it is as wide as its labels.
   -->
   <div
     class={[
@@ -71,7 +86,10 @@
         -->
         <span
           class={[
-            'flex flex-1 items-center justify-center gap-200 rounded-full px-[0.875rem] py-[0.375rem] ts-primary-button-l transition-colors duration-300',
+            'flex flex-1 items-center justify-center gap-200 rounded-full transition-colors duration-300',
+            size === 'sm'
+              ? 'px-[0.625rem] py-[0.25rem] ts-primary-button-s'
+              : 'px-[0.875rem] py-[0.375rem] ts-primary-button-l',
             'text-text-secondary-default peer-not-checked:peer-hover:text-text-primary-default',
             'peer-checked:bg-surface-primary-default peer-checked:text-text-on-dark-primary',
             'forced-colors:peer-checked:outline-2',

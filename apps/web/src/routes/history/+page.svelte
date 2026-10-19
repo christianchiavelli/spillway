@@ -1,8 +1,8 @@
 <script lang="ts">
   import Columns from '#lib/components/charts/Columns.svelte';
+  import ChartCard from '#lib/components/charts/ChartCard.svelte';
   import Legend from '#lib/components/charts/Legend.svelte';
   import Lines from '#lib/components/charts/Lines.svelte';
-  import ShowAsTable from '#lib/components/charts/ShowAsTable.svelte';
   import Card from '#lib/components/ui/Card.svelte';
   import PageHeader from '#lib/components/ui/PageHeader.svelte';
   import Table from '#lib/components/ui/Table.svelte';
@@ -88,11 +88,11 @@
   {#if data.history === null}
     <DataOnItsWay />
   {:else}
-    <Card
+    <ChartCard
       title="Curtailed Each Month"
       description="In terawatt hours (TWh), a million megawatt hours."
     >
-      {#snippet aside()}
+      {#snippet legend()}
         <Legend series={sources} />
       {/snippet}
       <Columns
@@ -124,7 +124,7 @@
         {notes}
         class="h-[16rem] mobile:h-[20rem]"
       />
-      <ShowAsTable>
+      {#snippet table()}
         <Table
           caption="Energy curtailed each month, in GWh"
           columns={[
@@ -148,14 +148,14 @@
             </tr>
           {/each}
         </Table>
-      </ShowAsTable>
-    </Card>
+      {/snippet}
+    </ChartCard>
 
-    <Card
+    <ChartCard
       title="Share of What Could Have Been Generated"
       description="Each month, the curtailed energy over all the plants could have made."
     >
-      {#snippet aside()}
+      {#snippet legend()}
         <Legend series={sources} mark="line" />
       {/snippet}
       <Lines
@@ -168,7 +168,32 @@
         endLabel={(s: number, v: number) => `${sources[s]?.label} ${int(v)}%`}
         class="h-[14rem] mobile:h-[16.25rem]"
       />
-    </Card>
+      {#snippet table()}
+        <Table
+          caption="Share of what wind and solar plants could have generated, each month"
+          columns={[
+            { label: 'Month' },
+            { label: 'Wind', right: true },
+            { label: 'Solar', right: true },
+          ]}
+          minWidth="mobile:min-w-[20rem]"
+        >
+          {#each [...months].reverse() as m (m.month)}
+            <tr class="ts-primary-body-m text-text-primary-default even:bg-surface-zebra">
+              <th scope="row" class="h-[2.25rem] px-300 text-left ts-primary-subheading-s">
+                {monthYear(m.month)}
+              </th>
+              <td class="px-300 text-right tabular-nums">
+                {m.wind === undefined ? 'Not published' : pct(shareOf(m.wind))}
+              </td>
+              <td class="px-300 text-right tabular-nums">
+                {m.solar === undefined ? 'Not published' : pct(shareOf(m.solar))}
+              </td>
+            </tr>
+          {/each}
+        </Table>
+      {/snippet}
+    </ChartCard>
 
     <Card title="Year by Year">
       <Table

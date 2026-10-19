@@ -1,6 +1,6 @@
 # 22. Charts drawn in our own SVG
 
-- Status: accepted
+- Status: accepted; its table under each chart replaced by [ADR 0025](0025-a-chart-or-its-table-by-a-switch.md)
 - Date: 2026-10-19
 
 ## Context

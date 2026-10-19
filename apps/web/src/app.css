@@ -125,6 +125,13 @@
   --color-chart-grid: var(--color-cool-grey-50);
   --color-chart-axis: var(--color-grey-150);
   --color-chart-muted: var(--color-grey-100);
+  /* The map's four steps, from the least curtailed to the most, in the navy
+     of the app's chrome: greyer than wind's blue, so no shade reads as a
+     source. Labels sit in a white halo, so they read on all four. */
+  --color-chart-scale-1: var(--color-cool-grey-100);
+  --color-chart-scale-2: var(--color-cool-grey-200);
+  --color-chart-scale-3: var(--color-cool-grey-300);
+  --color-chart-scale-4: var(--color-blue-500);
 
   /* Spacing: 2px to 72px */
   --spacing-0: 0;

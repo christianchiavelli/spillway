@@ -1,103 +1,125 @@
 <script lang="ts">
   import { scaleLinear } from 'd3-scale';
 
-  import { GAP, type Series, crisp, rightRounded, stack } from './geometry.ts';
+  import type { ResolvedPathname } from '$app/types';
+
+  import { GAP, type Series, rightRounded, stack } from './geometry.ts';
 
   type Row = {
+    key: string;
     label: string;
+    /** A line under the label, such as what it means. */
+    description?: string | undefined;
     /** A value per series, stacked left to right. */
     values: readonly number[];
-    /** The figure written at the bar's end. */
+    /** The figure on the right. */
     value: string;
+    /** Where the row leads: the whole row is the link. */
+    href?: ResolvedPathname | undefined;
   };
 
   type Props = {
+    /** The list's name, for a screen reader. */
     title: string;
     series: readonly Series[];
+    /** In the order they are ranked in. */
     rows: readonly Row[];
+    /** The row pointed at here or in a chart beside the list. */
+    active?: string | null;
+    onactive?: (key: string | null) => void;
+    /** The width to lay out for until the page is measured, as on the server. */
     fallbackWidth?: number;
   };
 
-  let { title, series, rows, fallbackWidth = 580 }: Props = $props();
+  let { title, series, rows, active = null, onactive, fallbackWidth = 360 }: Props = $props();
+  const id = $props.id();
+
+  const BAR = 12;
+  /** The row's padding on each side, as its p-300 class sets it. */
+  const PAD = 8;
 
   let width = $state(0);
-  const w = $derived(width > 0 ? width : fallbackWidth);
+  const plotW = $derived(Math.max(1, (width > 0 ? width : fallbackWidth) - 2 * PAD));
 
-  const BAR = 20;
-  const VALUE = 112;
-
-  const layout = $derived.by(() => {
-    // Narrow, each label goes above its bar, so the bars keep their length.
-    const stacked = w < 420;
-    const rowH = stacked ? 52 : 40;
-    const labelW = stacked ? 0 : 188;
-    const plotW = Math.max(1, w - labelW - VALUE);
+  const bars = $derived.by(() => {
+    // One scale for every row, so the bars compare: the longest is the largest.
     const max = Math.max(1, ...rows.map((r) => r.values.reduce((a, b) => a + b, 0)));
     const x = scaleLinear().domain([0, max]).range([0, plotW]);
-    return {
-      stacked,
-      labelW,
-      height: rows.length * rowH,
-      rows: rows.map((row, i) => {
-        const top = i * rowH;
-        const barY = stacked ? top + 22 : top + (rowH - BAR) / 2;
-        // Each segment after the first gives up 2px to the gap before it.
-        const segments = stack(row.values, (v) => labelW + x(v))
-          .map((s, j) => ({
-            series: series[s.index],
-            x: s.from + (j ? GAP : 0),
-            width: s.to - s.from - (j ? GAP : 0),
-          }))
-          .filter((s) => s.width >= 1);
-        const end = segments.at(-1);
-        return {
-          ...row,
-          labelY: stacked ? top + 12 : top + rowH / 2,
-          barY,
-          segments,
-          end: end ? end.x + end.width : labelW,
-        };
-      }),
-    };
+    return rows.map((row) =>
+      // Each segment after the first gives up 2px to the gap before it.
+      stack(row.values, x)
+        .map((s, j) => ({
+          series: series[s.index],
+          x: s.from + (j ? GAP : 0),
+          width: s.to - s.from - (j ? GAP : 0),
+        }))
+        .filter((s) => s.width >= 1),
+    );
   });
 </script>
 
-<div bind:clientWidth={width}>
-  <svg viewBox="0 0 {w} {layout.height}" role="img" aria-label={title} class="block h-auto w-full">
-    {#each layout.rows as row (row.label)}
-      <text x="0" y={row.labelY} dy="0.32em" class="fill-text-primary-default ts-primary-body-m"
-        >{row.label}</text
-      >
-      <!-- Every row starts on the same baseline, drawn under the bars. -->
-      <line
-        x1={crisp(layout.labelW) - 1}
-        x2={crisp(layout.labelW) - 1}
-        y1={row.barY - 4}
-        y2={row.barY + BAR + 4}
-        class="stroke-chart-axis"
-      />
-      {#each row.segments as segment, j (j)}
-        {#if j === row.segments.length - 1}
-          <path
-            d={rightRounded(segment.x, row.barY, segment.width, BAR)}
-            class={segment.series?.fill}
-          />
-        {:else}
-          <rect
-            x={segment.x}
-            y={row.barY}
-            width={segment.width}
-            height={BAR}
-            class={segment.series?.fill}
-          />
-        {/if}
-      {/each}
-      <text
-        x={row.end + 10}
-        y={row.barY + BAR / 2}
-        dy="0.32em"
-        class="fill-text-primary-default ts-primary-subheading-s tabular-nums">{row.value}</text
-      >
-    {/each}
-  </svg>
-</div>
+<!--
+  A ranked list, with a bar a row on one scale: words a screen reader reads as
+  they are, the drawing under each row hidden from it. The list reaches past
+  the card's text by a row's padding, so the rows' words line up with it and
+  their highlight has room around them.
+-->
+<ol aria-label={title} bind:clientWidth={width} class="-mx-300 flex flex-col">
+  {#each rows as row, i (row.key)}
+    <li
+      class={[
+        'group relative flex flex-col gap-300 rounded-200 p-300 transition-colors',
+        row.key === active && 'bg-surface-container-hover',
+      ]}
+      onpointerenter={() => onactive?.(row.key)}
+      onpointerleave={() => onactive?.(null)}
+    >
+      <div class="flex items-start justify-between gap-500">
+        <div class="flex min-w-0 flex-col gap-100">
+          <!-- Broken only between words: a name like Centre-West stays whole. -->
+          <span
+            id={`${id}-${i}`}
+            class={[
+              'ts-primary-subheading-s text-text-primary-default',
+              row.href && 'group-hover:text-text-primary-link group-hover:underline',
+            ]}
+          >
+            {#each row.label.split(' ') as word, j (j)}{j > 0 ? ' ' : ''}<span
+                class="whitespace-nowrap">{word}</span
+              >{/each}
+          </span>
+          {#if row.description}
+            <span class="ts-primary-body-s text-text-secondary-default">{row.description}</span>
+          {/if}
+        </div>
+        <span class="shrink-0 ts-primary-subheading-s text-text-primary-default tabular-nums"
+          >{row.value}</span
+        >
+      </div>
+      <svg viewBox="0 0 {plotW} {BAR}" aria-hidden="true" class="block h-auto w-full">
+        <!-- The track: the whole scale, so a short bar reads as short of the longest. -->
+        <path d={rightRounded(0, 0, plotW, BAR)} class="fill-chart-grid" />
+        {#each bars[i] ?? [] as segment, j (j)}
+          {#if j === (bars[i]?.length ?? 0) - 1}
+            <path d={rightRounded(segment.x, 0, segment.width, BAR)} class={segment.series?.fill} />
+          {:else}
+            <rect x={segment.x} width={segment.width} height={BAR} class={segment.series?.fill} />
+          {/if}
+        {/each}
+      </svg>
+      {#if row.href}
+        <!--
+          Over the whole row, so a click anywhere on it follows the link, and
+          focus rings the row; named by the row's label.
+        -->
+        <a
+          href={row.href}
+          aria-labelledby={`${id}-${i}`}
+          class="absolute inset-0 rounded-200"
+          onfocus={() => onactive?.(row.key)}
+          onblur={() => onactive?.(null)}
+        ></a>
+      {/if}
+    </li>
+  {/each}
+</ol>

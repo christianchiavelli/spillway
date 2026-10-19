@@ -65,10 +65,12 @@ test('without JavaScript, the data pages page and filter through their addresses
   await expect(page).toHaveURL(/\/plants\?subsystem=S$/);
   await expect(page.getByRole('combobox', { name: 'Subsystem' })).toHaveValue('S');
 
-  // The table under a chart opens without a script.
+  // A chart swaps for its table without a script: the switch is radios and CSS.
   await page.goto('/history');
-  await page.getByText('Show as table').first().click();
+  const months = page.getByRole('region', { name: 'Curtailed Each Month' });
+  await months.getByRole('radio', { name: 'Table' }).check();
   await expect(
     page.getByRole('table', { name: 'Energy curtailed each month, in GWh' }),
   ).toBeVisible();
+  await expect(months.getByRole('img')).toBeHidden();
 });

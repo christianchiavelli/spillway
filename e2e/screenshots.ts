@@ -132,6 +132,20 @@ const screens: Record<string, (browser: Browser) => Promise<Page>> = {
     return page;
   },
 
+  async 'overview-where'(browser) {
+    const { page } = await open(browser);
+    await page.goto('/?period=month');
+    const card = page.getByRole('region', { name: 'By Subsystem' });
+    // The card's top just under the sticky header.
+    await card.evaluate((el) => {
+      window.scrollBy(0, el.getBoundingClientRect().top - 80);
+    });
+    await settle(page);
+    // A row pointed at, so the map picks its region out.
+    await card.getByRole('link', { name: 'Southeast and Centre-West' }).hover();
+    return page;
+  },
+
   async 'overview-phone'(browser) {
     const { page } = await open(browser, PHONE);
     await page.goto('/');
@@ -227,8 +241,8 @@ try {
   for (const [name, take] of Object.entries(screens)) {
     if (names.length > 0 && !names.includes(name)) continue;
     const page = await take(browser);
-    // The tooltip shot keeps the pointer where it put it.
-    await settle(page, name !== 'overview-tooltip');
+    // The tooltip and the map shots keep the pointer where they put it.
+    await settle(page, !['overview-tooltip', 'overview-where'].includes(name));
     await page.screenshot({ path: `${out}${name}.png` });
     await page.context().close();
     console.log(`docs/screenshots/${name}.png`);

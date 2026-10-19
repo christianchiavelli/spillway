@@ -6,18 +6,22 @@ Spillway reads the ONS's files every hour and shows what was curtailed: a day, a
 
 SvelteKit 3 and Svelte 5 in front, a Go 1.27 API behind it, Postgres 18 behind that, and an OpenAPI 3.1 contract between the two servers that both are generated from.
 
-![The overview of Saturday, October 17, 2026: 130 GWh curtailed, 30% of what the plants could have generated, 57.9 GWh of wind and 72.2 GWh of solar, and a column per half hour, wind and solar stacked, peaking at 9,170 MWh at 10:00](docs/screenshots/overview.png)
+![The overview of Sunday, October 18, 2026: 152 GWh curtailed, 44% of what the plants could have generated, 64.5 GWh of wind and 87.4 GWh of solar, and a column per half hour, wind and solar stacked, peaking at 11,153 MWh at 10:00, with a switch to see it as a table](docs/screenshots/overview.png)
 
 <details>
 <summary>More screens</summary>
 
 **A half hour, pointed at**
 
-![The same day's chart with a tooltip on 12:30 to 13:00: 3,446 MWh of wind, 4,382 MWh of solar, 7,828 MWh in all](docs/screenshots/overview-tooltip.png)
+![The same day's chart with a tooltip on 12:30 to 13:00: 3,517 MWh of wind, 6,177 MWh of solar, 9,694 MWh in all](docs/screenshots/overview-tooltip.png)
 
 **A month so far**
 
-![October 2026 up to the 17th: 2,351 GWh curtailed, 15% less than September 1 to 17, a column per day, and the days to come marked as not published yet](docs/screenshots/overview-month.png)
+![October 2026 up to the 18th: 2,514 GWh curtailed, 17% less than September 1 to 18, a column per day, and the days to come marked as not published yet](docs/screenshots/overview-month.png)
+
+**Where, and why**
+
+![The month's curtailment by subsystem: a map of Brazil's four regions shaded in navy, the Northeast darkest, beside a ranking with a bar of wind and solar each; the Southeast pointed at in the list and picked out on the map; and the reasons the ONS gave, each with what it means](docs/screenshots/overview-where.png)
 
 **The plants, ranked**
 
@@ -122,7 +126,8 @@ The ONS publishes it on its open data portal under CC-BY, plant by plant in half
 - **A dense look, accessible first.** Dark chrome, white panels, compact controls and tables, from tokens in Tailwind 4; every label visible, native selects and radios, one focus ring, an error summary that takes focus ([ADR 0009](docs/adr/0009-a-dense-dashboard-look-accessibility-first.md)), and toasts that leave on their own but never while pointed at or focused ([ADR 0023](docs/adr/0023-toasts-under-the-page-header-leave-on-their-own.md)).
 - **The ONS's files, synced on their own.** A second process from the same binary lists the ONS's bucket every hour, loads each new or revised month by its ETag, the latest first, and replaces it whole in one transaction. The pages read the sums it keeps, never the files ([ADR 0020](docs/adr/0020-the-ons-data-is-synced-by-a-process-of-its-own.md)).
 - **Firings read from the data.** An alert's firings are a query over the daily sums, not rows of their own, so a revised day revises them too ([ADR 0021](docs/adr/0021-firings-are-read-from-the-data.md)).
-- **Charts in our own SVG.** Columns, bars and lines are Svelte components on d3-scale, drawn on the server with no style attribute for the content security policy to refuse, and each chart's figures sit in a table under it ([ADR 0022](docs/adr/0022-charts-drawn-in-our-own-svg.md)).
+- **Charts in our own SVG.** Columns, bars and lines are Svelte components on d3-scale, drawn on the server with no style attribute for the content security policy to refuse ([ADR 0022](docs/adr/0022-charts-drawn-in-our-own-svg.md)), and a switch in each card's header shows the chart's figures as a table in its place, with radio buttons and CSS, so it works without JavaScript ([ADR 0025](docs/adr/0025-a-chart-or-its-table-by-a-switch.md)).
+- **A map drawn from the data's own regions.** The four subsystems, joined from Natural Earth's states by where the ONS counts each state's plants, are shaded in the app's navy by what they lost, and pointing at one picks out its row in the ranking beside it ([ADR 0024](docs/adr/0024-a-map-of-the-subsystems-beside-their-ranking.md)).
 - **Observable, and gentle when it stops.** slog with a request id from the browser's page to the API's log line, OpenTelemetry metrics for Prometheus and traces over OTLP, readiness that turns off before the server drains and stops ([ADR 0011](docs/adr/0011-observability.md), [ADR 0012](docs/adr/0012-graceful-shutdown-with-a-drain.md)).
 
 ---

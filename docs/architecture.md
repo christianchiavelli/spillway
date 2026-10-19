@@ -64,7 +64,7 @@ spillway/
 │   ├── vite.config.ts          SvelteKit's options (CSP, CSRF, origin) and the Vitest projects
 │   └── Dockerfile              adapter-node's output on Node
 ├── e2e/                        Playwright against the running stack: desktop, phone, no JavaScript
-├── docs/                       this file, and the decision records in adr/
+├── docs/                       this file, the decision records in adr/, the logo and the map
 ├── compose.yaml                db, migrate, api, sync and web
 └── .github/workflows/ci.yml
 ```
@@ -124,7 +124,7 @@ The other operations take the same path: the contract, the generated decoder, a 
 | 6 | `routes/+page.server.ts` | `/?period=week&date=2026-10-14` asks `GET /v1/curtailment` and `GET /v1/plants`, public operations that need no session. |
 | 7 | `app/reports`, `domain/curtailment` | Works out the period from how far the data goes: the week from Monday that holds the day, up to the last day published, and as many days of the week before to compare with. |
 | 8 | `adapter/postgres` | Reads the totals, the series, the subsystems, the reasons and the plant counts in one repeatable-read snapshot. |
-| 9 | `features/curtailment`, `components/charts` | Words the period, and draws its columns and bars in SVG on the server, with the figures in a table under each chart (ADR 0022). |
+| 9 | `features/curtailment`, `components/charts` | Words the period, and draws its columns, bars and the subsystems' map in SVG on the server, each with a switch to its figures as a table (ADR 0022, ADR 0024, ADR 0025). |
 
 An alert's firings are a query over the same subsystem days, not rows of their own (ADR 0021).
 

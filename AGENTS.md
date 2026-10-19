@@ -10,7 +10,7 @@ Alerts on how much wind and solar energy Brazil's grid operator keeps from being
 | `services/api` | The Go API: `domain`, `app`, `adapter` and `platform` under `internal`, wired by hand in `cmd/api` (ADR 0003) |
 | `apps/web` | The SvelteKit app: every page rendered on its server, the only thing a browser talks to (ADR 0001) |
 | `e2e` | Playwright against the running stack: desktop, a phone, and JavaScript off |
-| `docs` | `architecture.md`, the decision records in `adr/`, and the logo in `brand/`, with the script that draws it |
+| `docs` | `architecture.md`, the decision records in `adr/`, the logo in `brand/` and the subsystems' map in `map/`, each with the script that draws it |
 
 ## Commands
 

@@ -5,10 +5,14 @@ test('every link on every page leads somewhere', async ({ page, request }) => {
   test.slow(); // every period's links, as a visitor and signed in
   const seen = new Set<string>();
   const check = async () => {
+    // Read from the attribute, so the map's SVG links count too: their href
+    // property is not a string.
     const hrefs = await page
       .locator('a[href]')
       .evaluateAll((links) =>
-        links.map((a) => (a as HTMLAnchorElement).href).filter((href) => !href.includes('#')),
+        links
+          .map((a) => new URL(a.getAttribute('href') ?? '', document.baseURI).href)
+          .filter((href) => !href.includes('#')),
       );
     for (const href of hrefs) {
       if (seen.has(href)) continue;

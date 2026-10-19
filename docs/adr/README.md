@@ -27,3 +27,5 @@ One file per decision that had a trade-off, version pins included. Each says wha
 | [0021](0021-firings-are-read-from-the-data.md) | Firings are read from the data, not recorded |
 | [0022](0022-charts-drawn-in-our-own-svg.md) | Charts drawn in our own SVG |
 | [0023](0023-toasts-under-the-page-header-leave-on-their-own.md) | Toasts under the page header, leaving on their own |
+| [0024](0024-a-map-of-the-subsystems-beside-their-ranking.md) | A map of the subsystems, beside their ranking |
+| [0025](0025-a-chart-or-its-table-by-a-switch.md) | A chart or its table, by a switch |

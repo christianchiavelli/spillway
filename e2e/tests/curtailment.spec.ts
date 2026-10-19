@@ -36,9 +36,21 @@ test('the overview reads a day, a week and a month, and steps through them', asy
   await expect(page).toHaveURL(/\/\?period=month&date=\d{4}-\d{2}-\d{2}$/);
   await expectAccessible(page);
 
-  // The chart's figures, for whoever cannot see it.
-  await page.getByText('Show as table').click();
+  // The chart's figures, for whoever cannot see it: the table takes the chart's place.
+  const days = page.getByRole('region', { name: 'Day by Day' });
+  await days.getByRole('radio', { name: 'Table' }).check();
   await expect(page.getByRole('table', { name: /^Energy curtailed each day, / })).toBeVisible();
+  await expect(days.getByRole('img')).toBeHidden();
+  await expectAccessible(page);
+
+  // A subsystem, on the map or in its list, leads to its plants in the same month.
+  const subsystems = page.getByRole('list', {
+    name: 'Curtailed energy by subsystem, the most first',
+  });
+  await expect(subsystems.getByRole('listitem')).toHaveCount(4);
+  await subsystems.getByRole('link', { name: 'Northeast' }).click();
+  await expect(page).toHaveURL(/\/plants\?period=month&date=\d{4}-\d{2}-\d{2}&subsystem=NE$/);
+  await expect(page.getByRole('combobox', { name: 'Subsystem' })).toHaveValue('NE');
 });
 
 test('a day the data does not reach is not found', async ({ request }) => {

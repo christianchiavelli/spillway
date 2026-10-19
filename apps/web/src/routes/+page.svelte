@@ -2,7 +2,7 @@
   import ArrowForward from '~icons/material-symbols/arrow-forward-rounded';
 
   import { resolve } from '$app/paths';
-  import type { PeriodKind } from '#lib/api/generated/types.gen.ts';
+  import type { PeriodKind, Subsystem } from '#lib/api/generated/types.gen.ts';
   import { buttonStyles } from '#lib/components/ui/button-styles.ts';
   import Card from '#lib/components/ui/Card.svelte';
   import PageHeader from '#lib/components/ui/PageHeader.svelte';
@@ -23,8 +23,10 @@
     const q = periodSearch(kind, date).toString();
     return q ? resolve(`/?${q}`) : resolve('/');
   };
-  const plants = (kind: PeriodKind, date?: string) => {
-    const q = periodSearch(kind, date).toString();
+  const plants = (kind: PeriodKind, date?: string, subsystem?: Subsystem) => {
+    const search = periodSearch(kind, date);
+    if (subsystem !== undefined) search.set('subsystem', subsystem);
+    const q = search.toString();
     return q ? resolve(`/plants?${q}`) : resolve('/plants');
   };
 </script>
@@ -61,7 +63,7 @@
 
     <Totals overview={o} />
     <OverTime overview={o} />
-    <Breakdown overview={o} />
+    <Breakdown overview={o} plantsIn={(s: Subsystem) => plants(p.kind, data.query.date, s)} />
 
     <Card
       title="Plants That Lost the Most"
