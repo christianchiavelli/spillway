@@ -6,8 +6,9 @@
   import type { WatchedAlert } from '#lib/api/generated/types.gen.ts';
   import Button from '#lib/components/ui/Button.svelte';
   import Table from '#lib/components/ui/Table.svelte';
-  import { shortDayYear } from '#lib/features/curtailment/format.ts';
+  import { int, shortDayYear } from '#lib/features/curtailment/format.ts';
   import { sourceOf, subsystemLabel } from '#lib/features/curtailment/grid.ts';
+  import { m } from '#lib/paraglide/messages.js';
 
   import { formatMWh } from './alerts.ts';
 
@@ -27,15 +28,15 @@
   cell, the delete button included.
 -->
 <Table
-  caption="Your alerts, newest first"
+  caption={m.alerts_table_caption()}
   columns={[
-    { label: 'Name' },
-    { label: 'Source' },
-    { label: 'Subsystem' },
-    { label: 'Daily Threshold', right: true },
-    { label: 'Last Fired' },
-    { label: 'Fired in 30 Days', right: true },
-    { label: 'Actions', hidden: true },
+    { label: m.alerts_table_name() },
+    { label: m.alerts_table_source() },
+    { label: m.alerts_table_subsystem() },
+    { label: m.alerts_table_threshold(), right: true },
+    { label: m.alerts_table_last_fired() },
+    { label: m.alerts_table_days_fired(), right: true },
+    { label: m.alerts_table_actions(), hidden: true },
   ]}
   minWidth="min-w-[52rem]"
 >
@@ -58,15 +59,15 @@
       <td class="px-300 text-right tabular-nums">{formatMWh(alert.thresholdMwh)}</td>
       <td class="px-300 whitespace-nowrap">
         {#if alert.lastFiredOn === undefined}
-          <span class="text-text-secondary-default">Never</span>
+          <span class="text-text-secondary-default">{m.alerts_never()}</span>
         {:else}
           <time datetime={alert.lastFiredOn}>{shortDayYear(alert.lastFiredOn)}</time>
         {/if}
       </td>
       <td class="px-300 text-right tabular-nums">
         {alert.daysFired === 0
-          ? 'None'
-          : `${alert.daysFired} ${alert.daysFired === 1 ? 'day' : 'days'}`}
+          ? m.alerts_none()
+          : m.alerts_days({ count: alert.daysFired, days: int(alert.daysFired) })}
       </td>
       <td class="px-200 py-100 text-right">
         <form method="POST" action="?/delete" use:enhance={ondelete}>
@@ -79,7 +80,7 @@
             icon={Delete}
             aria-disabled={deleting === alert.id || undefined}
           >
-            {deleting === alert.id ? 'Deleting…' : 'Delete'}
+            {deleting === alert.id ? m.alerts_deleting() : m.alerts_delete()}
             <span class="sr-only">“{alert.name}”</span>
           </Button>
         </form>

@@ -3,6 +3,8 @@
   import ChevronRight from '~icons/material-symbols/chevron-right-rounded';
 
   import type { ResolvedPathname } from '$app/types';
+  import { intlLocale } from '#lib/i18n.ts';
+  import { m } from '#lib/paraglide/messages.js';
 
   import { buttonStyles } from './button-styles.ts';
 
@@ -24,10 +26,10 @@
     total,
     previous,
     next,
-    labels = { previous: 'Previous', next: 'Next' },
+    labels = { previous: m.pager_previous(), next: m.pager_next() },
   }: Props = $props();
 
-  const whole = new Intl.NumberFormat('en-US');
+  const whole = $derived(new Intl.NumberFormat(intlLocale()));
   const button = buttonStyles({ variant: 'secondary', size: 'sm' });
   // The secondary button's frame, greyed: the lite build merges no classes, so
   // the disabled colour cannot be laid over the variant's own.
@@ -37,9 +39,13 @@
 
 <div class="flex flex-wrap items-center justify-between gap-400">
   <p class="ts-primary-body-m text-text-secondary-default">
-    {whole.format(from)} to {whole.format(to)} of {whole.format(total)}
+    {m.pager_range({
+      from: whole.format(from),
+      to: whole.format(to),
+      total: whole.format(total),
+    })}
   </p>
-  <nav aria-label="Pages" class="flex items-center gap-300">
+  <nav aria-label={m.pager_nav()} class="flex items-center gap-300">
     {#if previous === null}
       <span aria-disabled="true" class={off}
         ><ChevronLeft width={16} height={16} />{labels.previous}</span

@@ -11,9 +11,18 @@
   import DataOnItsWay from '#lib/features/curtailment/DataOnItsWay.svelte';
   import { publishedThrough } from '#lib/features/curtailment/format.ts';
   import OverTime from '#lib/features/curtailment/OverTime.svelte';
-  import { periodKinds, periodSearch, periodTitle } from '#lib/features/curtailment/periods.ts';
+  import {
+    nextLabel,
+    periodKinds,
+    periodSearch,
+    periodTitle,
+    previousLabel,
+  } from '#lib/features/curtailment/periods.ts';
   import PlantTable from '#lib/features/curtailment/PlantTable.svelte';
   import Totals from '#lib/features/curtailment/Totals.svelte';
+
+  import { localized } from '#lib/i18n.ts';
+  import { m } from '#lib/paraglide/messages.js';
 
   import type { PageProps } from './$types';
 
@@ -21,24 +30,21 @@
 
   const here = (kind: PeriodKind, date?: string) => {
     const q = periodSearch(kind, date).toString();
-    return q ? resolve(`/?${q}`) : resolve('/');
+    return localized(q ? resolve(`/?${q}`) : resolve('/'));
   };
   const plants = (kind: PeriodKind, date?: string, subsystem?: Subsystem) => {
     const search = periodSearch(kind, date);
     if (subsystem !== undefined) search.set('subsystem', subsystem);
     const q = search.toString();
-    return q ? resolve(`/plants?${q}`) : resolve('/plants');
+    return localized(q ? resolve(`/plants?${q}`) : resolve('/plants'));
   };
 </script>
 
 <svelte:head>
-  <title>Overview | Spillway</title>
+  <title>{m.overview_head()} | Spillway</title>
 </svelte:head>
 
-<PageHeader
-  title="Overview"
-  description="How much wind and solar energy the grid could not take, where, and why, from the data the grid operator publishes every day."
-/>
+<PageHeader title={m.overview_title()} description={m.overview_description()} />
 
 <div class="mx-auto flex max-w-[83.25rem] flex-col gap-600 px-600 py-700">
   {#if data.overview === null || data.plants === null}
@@ -55,9 +61,12 @@
       title={periodTitle(p)}
       previous={{
         href: p.earlier === undefined ? null : here(p.kind, p.earlier),
-        label: `Previous ${p.kind}`,
+        label: previousLabel(p.kind),
       }}
-      next={{ href: p.later === undefined ? null : here(p.kind, p.later), label: `Next ${p.kind}` }}
+      next={{
+        href: p.later === undefined ? null : here(p.kind, p.later),
+        label: nextLabel(p.kind),
+      }}
       note={publishedThrough(o.publishedThrough)}
     />
 
@@ -65,34 +74,30 @@
     <OverTime overview={o} />
     <Breakdown overview={o} plantsIn={(s: Subsystem) => plants(p.kind, data.query.date, s)} />
 
-    <Card
-      title="Plants That Lost the Most"
-      description="Some are single plants, others groups that share one connection to the grid."
-    >
+    <Card title={m.overview_plants_title()} description={m.overview_plants_description()}>
       {#snippet aside()}
         <a
           href={plants(p.kind, data.query.date)}
           class={buttonStyles({ variant: 'ghost', size: 'sm' })}
         >
-          All Plants
+          {m.overview_all_plants()}
           <ArrowForward width={16} height={16} />
         </a>
       {/snippet}
       {#if data.plants.items.length === 0}
         <p class="ts-primary-body-m text-text-secondary-default">
-          No plant lost energy in this period.
+          {m.overview_no_plant()}
         </p>
       {:else}
         <PlantTable
           plants={data.plants.items}
-          caption={`The plants that lost the most energy, ${periodTitle(p)}`}
+          caption={m.overview_plants_caption({ period: periodTitle(p) })}
         />
       {/if}
     </Card>
 
     <p class="ts-primary-body-s text-text-secondary-default">
-      From the ONS's open data, under CC-BY. The ONS checks each day after it publishes it, so the
-      latest figures can still change.
+      {m.overview_source_note()}
     </p>
   {/if}
 </div>

@@ -3,6 +3,7 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import type { DailyCurtailment } from '#lib/api/generated/types.gen.ts';
+import { inPortuguese } from '#lib/testing/portuguese.ts';
 
 import Preview from './Preview.svelte';
 
@@ -37,6 +38,26 @@ describe('Preview', () => {
     await expect.element(page.getByRole('heading', { name: 'No subsystem chosen' })).toBeVisible();
     await expect
       .element(page.getByText('Choose one to see what its wind plants lost.'))
+      .toBeVisible();
+  });
+});
+
+describe('Preview, in Portuguese', () => {
+  inPortuguese();
+
+  it('counts the days in a sentence of its own, not the English one translated word by word', async () => {
+    await render(Preview, { recent, source: 'wind', subsystem: 'NE', threshold: 100_000 });
+
+    await expect
+      .element(page.getByText(/Ele teria disparado em/))
+      .toHaveTextContent('Ele teria disparado em 1 dos últimos 3 dias, o último em 14 de outubro.');
+  });
+
+  it('makes the source agree with the plants it names', async () => {
+    await render(Preview, { recent, source: 'solar', subsystem: undefined, threshold: undefined });
+
+    await expect
+      .element(page.getByText('Escolha um para ver o que as usinas solares dele perderam.'))
       .toBeVisible();
   });
 });

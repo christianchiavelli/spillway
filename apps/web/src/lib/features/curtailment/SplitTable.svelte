@@ -1,5 +1,6 @@
 <script lang="ts">
   import Table from '#lib/components/ui/Table.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 
   import { energy } from './format.ts';
 
@@ -20,9 +21,9 @@
   {caption}
   columns={[
     { label: heading },
-    { label: 'Wind', right: true },
-    { label: 'Solar', right: true },
-    { label: 'Total', right: true },
+    { label: m.table_wind(), right: true },
+    { label: m.table_solar(), right: true },
+    { label: m.table_total(), right: true },
   ]}
   minWidth="mobile:min-w-[24rem]"
 >

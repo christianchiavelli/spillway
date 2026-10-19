@@ -25,6 +25,7 @@ import {
   zProblem,
   zSessionGrant,
 } from '#lib/api/generated/zod.gen.ts';
+import { m } from '#lib/paraglide/messages.js';
 
 import { log } from './log.ts';
 
@@ -73,7 +74,7 @@ export function api(event: RequestEvent, token: string | undefined = event.local
 
     if (response === undefined) {
       log.error('the API did not answer', { ...context, error: failure });
-      error(503, 'Spillway cannot reach its data right now. Try again in a moment.');
+      error(503, m.error_unreachable());
     }
     if (response.ok) {
       const parsed = success.safeParse(data);
@@ -83,7 +84,7 @@ export function api(event: RequestEvent, token: string | undefined = event.local
           status: response.status,
           issues: parsed.error.issues,
         });
-        error(502, 'Spillway got an answer it did not expect. Try again in a moment.');
+        error(502, m.error_unexpected_answer());
       }
       return { ok: true, data: parsed.data };
     }
@@ -94,7 +95,7 @@ export function api(event: RequestEvent, token: string | undefined = event.local
     const loading = problem.success && problem.data.code === 'data_unavailable';
     if ((response.status >= 500 && !loading) || !problem.success) {
       log.error('the API failed', { ...context, status: response.status, body: failure });
-      error(503, 'Spillway cannot reach its data right now. Try again in a moment.');
+      error(503, m.error_unreachable());
     }
     const retryAfter = Number(response.headers.get('Retry-After'));
     return {

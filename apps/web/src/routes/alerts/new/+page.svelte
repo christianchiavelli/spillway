@@ -14,7 +14,10 @@
   import { alertError, alertFields, limits } from '#lib/features/alerts/alerts.ts';
   import Preview from '#lib/features/alerts/Preview.svelte';
   import { sources, subsystemLabel, subsystems } from '#lib/features/curtailment/grid.ts';
+  import { int } from '#lib/features/curtailment/format.ts';
   import { enhanceForm } from '#lib/forms/enhance.ts';
+  import { localized } from '#lib/i18n.ts';
+  import { m } from '#lib/paraglide/messages.js';
 
   import type { PageProps } from './$types';
 
@@ -78,13 +81,10 @@
 </script>
 
 <svelte:head>
-  <title>New Alert | Spillway</title>
+  <title>{m.new_alert_head()} | Spillway</title>
 </svelte:head>
 
-<PageHeader
-  title="New Alert"
-  description="An alert fires on each day its curtailed energy goes over the threshold."
-/>
+<PageHeader title={m.new_alert_title()} description={m.new_alert_description()} />
 
 <div class="mx-auto flex max-w-[83.25rem] flex-col gap-600 px-600 py-700">
   <!--
@@ -92,17 +92,14 @@
     grows to where the form ends, whatever the form shows.
   -->
   <div class="grid gap-600 laptop:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-    <Card
-      title="What to Watch"
-      description="Choose a source and a subsystem, and how much curtailed energy in one day is too much."
-    >
+    <Card title={m.new_alert_watch()} description={m.new_alert_watch_description()}>
       {#if full || form?.create.full}
         <ErrorSummary
-          title="You have {limits.perAccount} alerts, the most an account can keep"
-          detail="Delete one on the alerts page to make room for another."
+          title={m.new_alert_full({ count: limits.perAccount })}
+          detail={m.new_alert_full_detail()}
         />
       {:else if problems.length > 0}
-        <ErrorSummary title="Check the alert" items={problems} />
+        <ErrorSummary title={m.new_alert_check()} items={problems} />
       {/if}
 
       <form
@@ -120,31 +117,38 @@
       >
         <AlertFields values={form?.create.values} errors={form?.create.errors} />
         <div class="flex justify-end gap-300">
-          <a href={resolve('/alerts')} class={buttonStyles({ variant: 'secondary' })}>Cancel</a>
+          <a href={localized(resolve('/alerts'))} class={buttonStyles({ variant: 'secondary' })}
+            >{m.new_alert_cancel()}</a
+          >
           <Button
             type="submit"
             icon={NotificationAdd}
             disabled={full}
             aria-disabled={creating || undefined}
           >
-            {creating ? 'Creating Alert…' : 'Create Alert'}
+            {creating ? m.new_alert_creating() : m.new_alert_create()}
           </Button>
         </div>
       </form>
     </Card>
 
     <Card
-      title={`The Last ${data.recent?.series[0]?.curtailedMwh.length ?? 30} Days`}
+      title={m.new_alert_last_days({
+        days: int(data.recent?.series[0]?.curtailedMwh.length ?? 30),
+      })}
       description={subsystem === undefined
-        ? 'What the alert would have caught, day by day.'
-        : `${sources.find((s) => s.value === source)?.label} in the ${subsystemLabel(subsystem)}, day by day, against your threshold.`}
+        ? m.new_alert_last_days_description()
+        : m.new_alert_source_in({
+            source: sources.find((s) => s.value === source)?.label ?? '',
+            subsystem: subsystemLabel(subsystem),
+          })}
     >
       {#if data.recent === null}
         <div class="flex flex-1 items-center justify-center">
           <EmptyState
             icon={Downloading}
-            title="Nothing to preview yet"
-            description="The ONS's data is still loading. The alert works all the same."
+            title={m.new_alert_nothing()}
+            description={m.new_alert_nothing_body()}
           />
         </div>
       {:else}

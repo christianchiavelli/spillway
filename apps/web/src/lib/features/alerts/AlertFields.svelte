@@ -4,6 +4,7 @@
   import TextField from '#lib/components/ui/TextField.svelte';
   import { sources, subsystems } from '#lib/features/curtailment/grid.ts';
   import type { FieldErrors } from '#lib/forms/errors.ts';
+  import { m } from '#lib/paraglide/messages.js';
 
   import { type AlertField, alertError, limits } from './alerts.ts';
 
@@ -29,7 +30,7 @@
 <div class="flex flex-col gap-600">
   <SegmentedControl
     id="alert-source"
-    legend="Source"
+    legend={m.alert_field_source()}
     name="source"
     options={sources}
     value={values.source ?? 'wind'}
@@ -38,28 +39,28 @@
   />
   <TextField
     id="alert-name"
-    label="Name"
+    label={m.alert_field_name()}
     name="name"
     value={values.name}
     required
     maxlength={limits.nameMaxLength}
     autocomplete="off"
     error={alertError('name', errors.name)}
-    hint="Unique among your alerts"
+    hint={m.alert_field_name_hint()}
   />
   <SelectField
     id="alert-subsystem"
-    label="Subsystem"
+    label={m.alert_field_subsystem()}
     name="subsystem"
     options={subsystems}
     value={values.subsystem}
-    placeholder="Choose a subsystem"
+    placeholder={m.alert_field_subsystem_placeholder()}
     required
     error={alertError('subsystem', errors.subsystem)}
   />
   <TextField
     id="alert-threshold"
-    label="Daily threshold"
+    label={m.alert_field_threshold()}
     name="thresholdMwh"
     type="text"
     inputmode="numeric"
@@ -67,6 +68,6 @@
     suffix="MWh"
     required
     error={alertError('thresholdMwh', errors.thresholdMwh)}
-    hint="Curtailed in one day"
+    hint={m.alert_field_threshold_hint()}
   />
 </div>

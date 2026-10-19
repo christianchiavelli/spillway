@@ -1,7 +1,10 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import * as z from 'zod';
 
+import { resolve } from '$app/paths';
 import { readPage } from '#lib/features/curtailment/filters.ts';
+import { localized } from '#lib/i18n.ts';
+import { m } from '#lib/paraglide/messages.js';
 import { api } from '#lib/server/api.ts';
 import { setFlash } from '#lib/server/flash.ts';
 import { text } from '#lib/server/forms.ts';
@@ -17,7 +20,7 @@ const FIRINGS = 10;
 export const load: PageServerLoad = async (event) => {
   requireSession(event);
   const page = readPage(event.url);
-  if (page === null) error(404, 'There is no such page of firings.');
+  if (page === null) error(404, m.alerts_no_page());
   const client = api(event);
   const [alerts, firings] = await Promise.all([
     client.listAlerts(),
@@ -45,6 +48,6 @@ export const actions = {
       kind: 'alert-deleted',
       name: text(form, 'name').slice(0, 80),
     });
-    redirect(303, '/alerts');
+    redirect(303, localized(resolve('/alerts')));
   },
 } satisfies Actions;

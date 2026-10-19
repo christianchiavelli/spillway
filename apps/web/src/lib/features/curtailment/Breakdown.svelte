@@ -7,6 +7,8 @@
   import Legend from '#lib/components/charts/Legend.svelte';
   import Card from '#lib/components/ui/Card.svelte';
 
+  import { m } from '#lib/paraglide/messages.js';
+
   import { energy } from './format.ts';
   import { reasons, sources, subsystemLabel } from './grid.ts';
   import { periodTitle } from './periods.ts';
@@ -75,8 +77,8 @@
 -->
 <div class="grid gap-600 laptop:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
   <ChartCard
-    title="By Subsystem"
-    description="The national grid is run as four regions, its subsystems. Choose one to see its plants."
+    title={m.breakdown_subsystem_title()}
+    description={m.breakdown_subsystem_description()}
   >
     {#snippet legend()}
       <Legend series={sources} />
@@ -98,7 +100,7 @@
           />
         </div>
         <BarRows
-          title="Curtailed energy by subsystem, the most first"
+          title={m.breakdown_subsystem_list()}
           series={sources}
           rows={bars(bySubsystem)}
           {active}
@@ -108,33 +110,29 @@
     </div>
     {#snippet table()}
       <SplitTable
-        caption={`Energy curtailed in each subsystem, ${title}`}
-        heading="Subsystem"
+        caption={m.breakdown_subsystem_caption({ period: title })}
+        heading={m.breakdown_subsystem_heading()}
         rows={bySubsystem}
       />
     {/snippet}
   </ChartCard>
 
   {#if byReason.length === 0}
-    <Card title="By Reason" description="The reason the ONS gave when it limited a plant.">
+    <Card title={m.breakdown_reason_title()} description={m.breakdown_reason_description()}>
       <p class="ts-primary-body-m text-text-secondary-default">
-        The ONS limited no plant in this period.
+        {m.breakdown_reason_none()}
       </p>
     </Card>
   {:else}
-    <ChartCard title="By Reason" description="The reason the ONS gave when it limited a plant.">
+    <ChartCard title={m.breakdown_reason_title()} description={m.breakdown_reason_description()}>
       {#snippet legend()}
         <Legend series={sources} />
       {/snippet}
-      <BarRows
-        title="Curtailed energy by reason, the most first"
-        series={sources}
-        rows={bars(byReason)}
-      />
+      <BarRows title={m.breakdown_reason_list()} series={sources} rows={bars(byReason)} />
       {#snippet table()}
         <SplitTable
-          caption={`Energy curtailed for each reason the ONS gave, ${title}`}
-          heading="Reason"
+          caption={m.breakdown_reason_caption({ period: title })}
+          heading={m.breakdown_reason_heading()}
           rows={byReason}
         />
       {/snippet}

@@ -12,8 +12,16 @@
   import DataOnItsWay from '#lib/features/curtailment/DataOnItsWay.svelte';
   import { dayAndMonth, int, publishedThrough } from '#lib/features/curtailment/format.ts';
   import { sources, subsystems } from '#lib/features/curtailment/grid.ts';
-  import { periodKinds, periodSearch, periodTitle } from '#lib/features/curtailment/periods.ts';
+  import {
+    nextLabel,
+    periodKinds,
+    periodSearch,
+    periodTitle,
+    previousLabel,
+  } from '#lib/features/curtailment/periods.ts';
   import PlantTable from '#lib/features/curtailment/PlantTable.svelte';
+  import { localized } from '#lib/i18n.ts';
+  import { m } from '#lib/paraglide/messages.js';
 
   import type { PageProps } from './$types';
 
@@ -41,18 +49,15 @@
     if (q.source) search.set('source', q.source);
     if (q.subsystem) search.set('subsystem', q.subsystem);
     if (q.page > 1) search.set('page', String(q.page));
-    return search.size ? resolve(`/plants?${search.toString()}`) : resolve('/plants');
+    return localized(search.size ? resolve(`/plants?${search.toString()}`) : resolve('/plants'));
   }
 </script>
 
 <svelte:head>
-  <title>Plants | Spillway</title>
+  <title>{m.plants_head()} | Spillway</title>
 </svelte:head>
 
-<PageHeader
-  title="Plants"
-  description="Every wind and solar plant the ONS limited, by the energy it lost. Some are single plants, others groups that share one connection to the grid."
-/>
+<PageHeader title={m.plants_title()} description={m.plants_description()} />
 
 <div class="mx-auto flex max-w-[83.25rem] flex-col gap-600 px-600 py-700">
   {#if data.ranking === null}
@@ -69,22 +74,24 @@
       title={periodTitle(p)}
       previous={{
         href: p.earlier === undefined ? null : href({ date: p.earlier }),
-        label: `Previous ${p.kind}`,
+        label: previousLabel(p.kind),
       }}
       next={{
         href: p.later === undefined ? null : href({ date: p.later }),
-        label: `Next ${p.kind}`,
+        label: nextLabel(p.kind),
       }}
       note={publishedThrough(r.publishedThrough)}
     />
 
     <Card
-      title={`${int(r.total)} ${r.total === 1 ? 'Plant' : 'Plants'} Limited`}
-      description={`Of the ${int(r.reporting)} that reported ${
-        p.start === p.through
-          ? `on ${dayAndMonth(p.start)}`
-          : `from ${dayAndMonth(p.start)} to ${dayAndMonth(p.through)}`
-      }, the most energy lost first.`}
+      title={m.plants_limited_title({ count: r.total, total: int(r.total) })}
+      description={p.start === p.through
+        ? m.plants_reported_on({ reporting: int(r.reporting), day: dayAndMonth(p.start) })
+        : m.plants_reported_between({
+            reporting: int(r.reporting),
+            start: dayAndMonth(p.start),
+            end: dayAndMonth(p.through),
+          })}
     >
       <!--
         The source and the subsystem narrow this list and nothing else, so they
@@ -93,10 +100,10 @@
       {#snippet aside()}
         <div class="flex w-full flex-wrap items-center gap-400 mobile:w-auto">
           <PillNav
-            label="Source"
+            label={m.plants_source()}
             items={[
               {
-                label: 'All',
+                label: m.plants_all(),
                 href: href({ source: undefined }),
                 current: data.source === undefined,
               },
@@ -115,7 +122,7 @@
           -->
           <form
             method="GET"
-            action={resolve('/plants')}
+            action={localized(resolve('/plants'))}
             class="flex w-full items-center gap-300 mobile:w-auto"
           >
             {#if current.kind !== 'day'}
@@ -132,11 +139,13 @@
             >
               <select
                 name="subsystem"
-                aria-label="Subsystem"
+                aria-label={m.plants_subsystem()}
                 onchange={(e) => e.currentTarget.form?.requestSubmit()}
                 class="select-menu h-full w-full cursor-pointer rounded-200 bg-transparent pr-800 pl-300 ts-primary-body-m text-text-primary-default outline-none"
               >
-                <option value="" selected={data.subsystem === undefined}>All subsystems</option>
+                <option value="" selected={data.subsystem === undefined}
+                  >{m.plants_all_subsystems()}</option
+                >
                 {#each subsystems as s (s.value)}
                   <option value={s.value} selected={data.subsystem === s.value}>{s.label}</option>
                 {/each}
@@ -149,7 +158,7 @@
             </div>
             <noscript>
               <button type="submit" class={buttonStyles({ variant: 'secondary', size: 'sm' })}
-                >Show</button
+                >{m.plants_show()}</button
               >
             </noscript>
           </form>
@@ -157,13 +166,16 @@
       {/snippet}
       {#if r.items.length === 0}
         <p class="ts-primary-body-m text-text-secondary-default">
-          {r.total === 0
-            ? 'No plant lost energy in this period.'
-            : 'This page is past the end of the list.'}
+          {r.total === 0 ? m.overview_no_plant() : m.plants_past_end()}
         </p>
       {:else}
         {@const first = (data.page - 1) * data.pageSize + 1}
-        <PlantTable plants={r.items} caption={`Plants limited, ${periodTitle(p)}`} {first} full />
+        <PlantTable
+          plants={r.items}
+          caption={m.plants_caption({ period: periodTitle(p) })}
+          {first}
+          full
+        />
         <Pager
           from={first}
           to={first + r.items.length - 1}

@@ -21,6 +21,7 @@
   } from '#lib/features/curtailment/format.ts';
   import { sources } from '#lib/features/curtailment/grid.ts';
   import { type Year, byYear } from '#lib/features/curtailment/years.ts';
+  import { m } from '#lib/paraglide/messages.js';
 
   import type { PageProps } from './$types';
 
@@ -30,15 +31,15 @@
   const years = $derived(byYear(months));
   const lastDay = $derived(data.history ? dayOf(data.history.publishedThrough) : '');
   const firstMonth = $derived(months[0]?.month ?? '');
-  const solarFrom = $derived(months.find((m) => m.solar !== undefined)?.month);
+  const solarFrom = $derived(months.find((month) => month.solar !== undefined)?.month);
 
   // Two moments the columns cannot explain on their own, where there is room.
   const notes = $derived(
     [
-      { month: solarFrom, text: 'Solar data begins', lift: 64 },
-      { month: '2023-08-01', text: 'Blackout of August 15, 2023', lift: 98 },
+      { month: solarFrom, text: m.history_note_solar(), lift: 64 },
+      { month: '2023-08-01', text: m.history_note_blackout(), lift: 98 },
     ].flatMap((n) => {
-      const index = months.findIndex((m) => m.month === n.month);
+      const index = months.findIndex((month) => month.month === n.month);
       return index < 0 ? [] : [{ index, text: n.text, lift: n.lift, minWidth: 720 }];
     }),
   );
@@ -48,24 +49,24 @@
 
   const yearLabel = (y: Year) => {
     if (y.last.slice(0, 7) === lastDay.slice(0, 7) && !lastDay.endsWith('-12-31')) {
-      return `${y.year}, to ${dayAndMonth(lastDay)}`;
+      return m.history_year_to({ year: y.year, day: dayAndMonth(lastDay) });
     }
     if (y.first === firstMonth && !firstMonth.endsWith('-01-01')) {
-      return `${y.year}, from ${monthName(y.first)}`;
+      return m.history_year_from({ year: y.year, month: monthName(y.first) });
     }
     return y.year;
   };
 
   const yearTick = (i: number) => {
-    const m = months[i]?.month;
-    return m?.endsWith('-01-01') ? m.slice(0, 4) : null;
+    const day = months[i]?.month;
+    return day?.endsWith('-01-01') ? day.slice(0, 4) : null;
   };
 
   // Each month's loss over all the plants could have made, in percent.
   const shares = $derived(
     sources.map((s) =>
-      months.map((m) => {
-        const e = m[s.value];
+      months.map((month) => {
+        const e = month[s.value];
         return e === undefined ? null : shareOf(e) * 100;
       }),
     ),
@@ -74,48 +75,45 @@
 </script>
 
 <svelte:head>
-  <title>History | Spillway</title>
+  <title>{m.history_head()} | Spillway</title>
 </svelte:head>
 
 <PageHeader
-  title="History"
+  title={m.history_title()}
   description={firstMonth && solarFrom
-    ? `Curtailment since the ONS began publishing it: ${monthYear(firstMonth)} for wind, ${monthYear(solarFrom)} for solar.`
-    : 'Curtailment since the ONS began publishing it.'}
+    ? m.history_description({ wind: monthYear(firstMonth), solar: monthYear(solarFrom) })
+    : m.history_description_short()}
 />
 
 <div class="mx-auto flex max-w-[83.25rem] flex-col gap-600 px-600 py-700">
   {#if data.history === null}
     <DataOnItsWay />
   {:else}
-    <ChartCard
-      title="Curtailed Each Month"
-      description="In terawatt hours (TWh), a million megawatt hours."
-    >
+    <ChartCard title={m.history_months_title()} description={m.history_months_description()}>
       {#snippet legend()}
         <Legend series={sources} />
       {/snippet}
       <Columns
-        title={`Energy curtailed each month since ${monthYear(firstMonth)}`}
+        title={m.history_months_chart({ month: monthYear(firstMonth) })}
         series={sources}
-        values={months.map((m) => [
-          (m.wind?.curtailedMwh ?? 0) / 1e6,
-          (m.solar?.curtailedMwh ?? 0) / 1e6,
+        values={months.map((month) => [
+          (month.wind?.curtailedMwh ?? 0) / 1e6,
+          (month.solar?.curtailedMwh ?? 0) / 1e6,
         ])}
         tick={(v: number) => (v === 0 ? '0' : one(v))}
         xLabel={yearTick}
         peak={(i: number, total: number) =>
           `${shortMonthYear(months[i]?.month ?? '')}: ${one(total)} TWh`}
         tip={(i: number) => {
-          const m = months[i];
-          if (!m) return null;
+          const month = months[i];
+          if (!month) return null;
           return {
-            title: monthYear(m.month),
+            title: monthYear(month.month),
             rows: sources.map((s) => {
-              const e = m[s.value];
+              const e = month[s.value];
               return {
                 label: s.label,
-                value: e === undefined ? 'Not published' : `${twh(e.curtailedMwh)} TWh`,
+                value: e === undefined ? m.history_not_published() : `${twh(e.curtailedMwh)} TWh`,
                 fill: s.fill,
               };
             }),
@@ -126,24 +124,26 @@
       />
       {#snippet table()}
         <Table
-          caption="Energy curtailed each month, in GWh"
+          caption={m.history_months_caption()}
           columns={[
-            { label: 'Month' },
-            { label: 'Wind', right: true },
-            { label: 'Solar', right: true },
+            { label: m.history_month() },
+            { label: m.table_wind(), right: true },
+            { label: m.table_solar(), right: true },
           ]}
           minWidth="mobile:min-w-[20rem]"
         >
-          {#each [...months].reverse() as m (m.month)}
+          {#each [...months].reverse() as month (month.month)}
             <tr class="ts-primary-body-m text-text-primary-default even:bg-surface-zebra">
               <th scope="row" class="h-[2.25rem] px-300 text-left ts-primary-subheading-s">
-                {monthYear(m.month)}
+                {monthYear(month.month)}
               </th>
               <td class="px-300 text-right tabular-nums">
-                {int((m.wind?.curtailedMwh ?? 0) / 1000)}
+                {int((month.wind?.curtailedMwh ?? 0) / 1000)}
               </td>
               <td class="px-300 text-right tabular-nums">
-                {m.solar === undefined ? 'Not published' : int(m.solar.curtailedMwh / 1000)}
+                {month.solar === undefined
+                  ? m.history_not_published()
+                  : int(month.solar.curtailedMwh / 1000)}
               </td>
             </tr>
           {/each}
@@ -151,15 +151,12 @@
       {/snippet}
     </ChartCard>
 
-    <ChartCard
-      title="Share of What Could Have Been Generated"
-      description="Each month, the curtailed energy over all the plants could have made."
-    >
+    <ChartCard title={m.history_share_title()} description={m.history_share_description()}>
       {#snippet legend()}
         <Legend series={sources} mark="line" />
       {/snippet}
       <Lines
-        title="Share of what wind and solar plants could have generated, each month"
+        title={m.history_share_chart()}
         series={sources}
         values={shares}
         max={top}
@@ -170,24 +167,24 @@
       />
       {#snippet table()}
         <Table
-          caption="Share of what wind and solar plants could have generated, each month"
+          caption={m.history_share_chart()}
           columns={[
-            { label: 'Month' },
-            { label: 'Wind', right: true },
-            { label: 'Solar', right: true },
+            { label: m.history_month() },
+            { label: m.table_wind(), right: true },
+            { label: m.table_solar(), right: true },
           ]}
           minWidth="mobile:min-w-[20rem]"
         >
-          {#each [...months].reverse() as m (m.month)}
+          {#each [...months].reverse() as month (month.month)}
             <tr class="ts-primary-body-m text-text-primary-default even:bg-surface-zebra">
               <th scope="row" class="h-[2.25rem] px-300 text-left ts-primary-subheading-s">
-                {monthYear(m.month)}
+                {monthYear(month.month)}
               </th>
               <td class="px-300 text-right tabular-nums">
-                {m.wind === undefined ? 'Not published' : pct(shareOf(m.wind))}
+                {month.wind === undefined ? m.history_not_published() : pct(shareOf(month.wind))}
               </td>
               <td class="px-300 text-right tabular-nums">
-                {m.solar === undefined ? 'Not published' : pct(shareOf(m.solar))}
+                {month.solar === undefined ? m.history_not_published() : pct(shareOf(month.solar))}
               </td>
             </tr>
           {/each}
@@ -195,16 +192,16 @@
       {/snippet}
     </ChartCard>
 
-    <Card title="Year by Year">
+    <Card title={m.history_years_title()}>
       <Table
-        caption="Curtailed energy by year"
+        caption={m.history_years_caption()}
         columns={[
-          { label: 'Year' },
-          { label: 'Wind', right: true, class: wide },
-          { label: 'Share', right: true, class: wide },
-          { label: 'Solar', right: true, class: wide },
-          { label: 'Share', right: true, class: wide },
-          { label: 'Total', right: true },
+          { label: m.history_year() },
+          { label: m.table_wind(), right: true, class: wide },
+          { label: m.history_share(), right: true, class: wide },
+          { label: m.table_solar(), right: true, class: wide },
+          { label: m.history_share(), right: true, class: wide },
+          { label: m.table_total(), right: true },
         ]}
         minWidth="mobile:min-w-[40rem]"
       >
@@ -223,7 +220,7 @@
               {#if y.solar}
                 {twh(y.solar.curtailedMwh)} TWh
               {:else}
-                <span class="text-text-secondary-default">Not published</span>
+                <span class="text-text-secondary-default">{m.history_not_published()}</span>
               {/if}
             </td>
             <td class={['px-300 text-right tabular-nums', wide]}>

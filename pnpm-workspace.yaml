@@ -47,6 +47,9 @@ catalog:
   d3-shape: 3.2.0
   '@types/d3-scale': 4.0.9
   '@types/d3-shape': 3.2.0
+  # The Portuguese edition: messages compiled to functions, the locale read from the address.
+  '@inlang/paraglide-js': 2.29.0
+  '@inlang/plugin-message-format': 4.5.4
 
   # The API contract
   '@hey-api/openapi-ts': 0.99.0

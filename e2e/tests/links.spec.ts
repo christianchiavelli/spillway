@@ -32,6 +32,11 @@ test('every link on every page leads somewhere', async ({ page, request }) => {
     '/history',
     '/sign-in',
     '/sign-up',
+    '/pt-br',
+    '/pt-br?period=week',
+    '/pt-br/plants',
+    '/pt-br/history',
+    '/pt-br/sign-in',
   ]) {
     await page.goto(path);
     await check();
@@ -40,7 +45,11 @@ test('every link on every page leads somewhere', async ({ page, request }) => {
   await check();
   await page.goto('/alerts/new');
   await check();
+  await page.goto('/pt-br/alerts');
+  await check();
 
-  const missing = await request.get('/no-such-page');
-  expect(missing.status()).toBe(404);
+  for (const path of ['/no-such-page', '/pt-br/no-such-page']) {
+    const missing = await request.get(path);
+    expect(missing.status(), path).toBe(404);
+  }
 });

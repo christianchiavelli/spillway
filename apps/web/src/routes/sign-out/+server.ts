@@ -1,5 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 
+import { resolve } from '$app/paths';
+import { localized } from '#lib/i18n.ts';
 import { api } from '#lib/server/api.ts';
 import { endSession } from '#lib/server/session.ts';
 
@@ -12,5 +14,5 @@ export const POST: RequestHandler = async (event) => {
     await api(event).endSession();
   }
   endSession(event.cookies, event.url);
-  redirect(303, '/sign-in');
+  redirect(303, localized(resolve('/sign-in')));
 };

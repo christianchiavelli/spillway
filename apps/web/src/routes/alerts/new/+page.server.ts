@@ -1,8 +1,10 @@
 import { fail, redirect } from '@sveltejs/kit';
 
+import { resolve } from '$app/paths';
 import { zNewAlert } from '#lib/api/generated/zod.gen.ts';
 import { type AlertField, alertFields } from '#lib/features/alerts/alerts.ts';
 import { type FieldErrors, fromIssues, fromProblem } from '#lib/forms/errors.ts';
+import { localized } from '#lib/i18n.ts';
 import { api } from '#lib/server/api.ts';
 import { setFlash } from '#lib/server/flash.ts';
 import { text, wholeNumber } from '#lib/server/forms.ts';
@@ -51,6 +53,6 @@ export const actions = {
     }
 
     setFlash(event.cookies, event.url, { kind: 'alert-created', name: result.data.name });
-    redirect(303, '/alerts');
+    redirect(303, localized(resolve('/alerts')));
   },
 } satisfies Actions;

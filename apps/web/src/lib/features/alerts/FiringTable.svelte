@@ -2,6 +2,7 @@
   import type { Firing } from '#lib/api/generated/types.gen.ts';
   import Table from '#lib/components/ui/Table.svelte';
   import { longDay, mwh, pct, shortDay } from '#lib/features/curtailment/format.ts';
+  import { m } from '#lib/paraglide/messages.js';
 
   type Props = { firings: readonly Firing[] };
 
@@ -13,13 +14,13 @@
 </script>
 
 <Table
-  caption="The days an alert went over its threshold, newest first"
+  caption={m.firings_caption()}
   columns={[
-    { label: 'Day' },
-    { label: 'Alert' },
-    { label: 'Curtailed', right: true, class: wide },
-    { label: 'Threshold', right: true, class: wide },
-    { label: 'Over by', right: true, class: wide },
+    { label: m.firings_day() },
+    { label: m.firings_alert() },
+    { label: m.firings_curtailed(), right: true, class: wide },
+    { label: m.firings_threshold(), right: true, class: wide },
+    { label: m.firings_over_by(), right: true, class: wide },
   ]}
   minWidth="mobile:min-w-[40rem]"
 >

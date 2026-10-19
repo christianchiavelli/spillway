@@ -6,7 +6,7 @@ import globals from 'globals';
 import ts from 'typescript-eslint';
 
 export default defineConfig(
-  globalIgnores(['build/', '.svelte-kit/', 'src/lib/api/generated/']),
+  globalIgnores(['build/', '.svelte-kit/', 'src/lib/api/generated/', 'src/lib/paraglide/']),
   js.configs.recommended,
   ts.configs.strictTypeChecked,
   svelte.configs.recommended,

@@ -3,7 +3,9 @@ import {
   AlertNameSchema,
   ThresholdSchema,
 } from '#lib/api/generated/schemas.gen.ts';
+import { int } from '#lib/features/curtailment/format.ts';
 import type { FieldErrorCode } from '#lib/forms/errors.ts';
+import { m } from '#lib/paraglide/messages.js';
 
 /** The fields of the alert form, in the order it shows them. */
 export const alertFields = ['source', 'name', 'subsystem', 'thresholdMwh'] as const;
@@ -17,34 +19,32 @@ export const limits = {
   perAccount: AlertListSchema.properties.items.maxItems,
 } as const;
 
-const whole = new Intl.NumberFormat('en-US');
-
-/** "1,500 MWh": a whole number, grouped in thousands, with its unit. */
+/** "1,500 MWh" or "1.500 MWh": a whole number, grouped in thousands, with its unit. */
 export function formatMWh(value: number): string {
-  return `${whole.format(value)} MWh`;
+  return `${int(value)} MWh`;
 }
 
-const range = `${whole.format(limits.thresholdMin)} to ${whole.format(limits.thresholdMax)}`;
-
-const messages: Record<AlertField, Partial<Record<FieldErrorCode, string>>> = {
+// Functions, not strings, so each request reads them in its own edition.
+const messages: Record<AlertField, Partial<Record<FieldErrorCode, () => string>>> = {
   name: {
-    required: 'Enter a name for the alert',
-    too_long: `Use ${limits.nameMaxLength} characters or fewer`,
-    invalid: 'Use letters, numbers and punctuation only',
-    taken: 'You already have an alert with this name',
+    required: m.alert_name_required,
+    too_long: () => m.alert_name_too_long({ max: limits.nameMaxLength }),
+    invalid: m.alert_name_invalid,
+    taken: m.alert_name_taken,
   },
   source: {
-    required: 'Choose wind or solar',
-    invalid: 'Choose wind or solar',
+    required: m.alert_source_required,
+    invalid: m.alert_source_required,
   },
   subsystem: {
-    required: 'Choose a subsystem',
-    invalid: 'Choose a subsystem',
+    required: m.alert_subsystem_required,
+    invalid: m.alert_subsystem_required,
   },
   thresholdMwh: {
-    required: 'Enter a daily threshold in MWh',
-    invalid: 'Enter a whole number of MWh, such as 500',
-    out_of_range: `Enter a number from ${range}`,
+    required: m.alert_threshold_required,
+    invalid: m.alert_threshold_invalid,
+    out_of_range: () =>
+      m.alert_threshold_range({ min: int(limits.thresholdMin), max: int(limits.thresholdMax) }),
   },
 };
 
@@ -54,5 +54,5 @@ export function alertError(
   code: FieldErrorCode | undefined,
 ): string | undefined {
   if (code === undefined) return undefined;
-  return messages[field][code] ?? 'Check this field';
+  return (messages[field][code] ?? m.form_check_field)();
 }

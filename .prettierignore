@@ -1,6 +1,7 @@
 pnpm-lock.yaml
 services/
 apps/web/src/lib/api/generated/
+apps/web/src/lib/paraglide/
 apps/web/static/
 apps/web/build/
 apps/web/.svelte-kit/

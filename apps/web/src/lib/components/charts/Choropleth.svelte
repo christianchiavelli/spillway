@@ -2,6 +2,7 @@
   import { scaleQuantize } from 'd3-scale';
 
   import type { ResolvedPathname } from '$app/types';
+  import { m } from '#lib/paraglide/messages.js';
 
   import { CHAR } from './geometry.ts';
 
@@ -142,12 +143,12 @@
   <p
     class="mt-400 flex items-center justify-center gap-300 ts-primary-body-s text-text-secondary-default"
   >
-    Less
+    {m.map_less()}
     <span class="flex">
       {#each STEPS as s (s.fill)}
         <span class={['h-[0.625rem] w-600', s.swatch]}></span>
       {/each}
     </span>
-    More
+    {m.map_more()}
   </p>
 </div>

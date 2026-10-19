@@ -8,6 +8,8 @@
   import CheckCircle from '~icons/material-symbols/check-circle-outline-rounded';
   import Close from '~icons/material-symbols/close-rounded';
 
+  import { m } from '#lib/paraglide/messages.js';
+
   type Props = { toasts: readonly Toast[]; ondismiss: (id: string) => void };
 
   let { toasts, ondismiss }: Props = $props();
@@ -103,7 +105,7 @@
         }}
       >
         <Close width={16} height={16} />
-        <span class="sr-only">Dismiss “{toast.title}”</span>
+        <span class="sr-only">{m.toast_dismiss({ title: toast.title })}</span>
       </button>
     </div>
   {/each}

@@ -3,6 +3,7 @@
   import ChevronRight from '~icons/material-symbols/chevron-right-rounded';
 
   import type { ResolvedPathname } from '$app/types';
+  import { m } from '#lib/paraglide/messages.js';
 
   import PillNav from './PillNav.svelte';
   import StepLink from './StepLink.svelte';
@@ -49,10 +50,15 @@
     />
   </div>
   <div class="col-start-2 row-start-1 flex flex-col text-center mobile:mr-auto mobile:text-left">
-    <h2 class="ts-primary-subheading-m text-balance text-text-primary-default">{title}</h2>
+    <!-- Portuguese writes a weekday or a month in lower case; a title starts with a capital. -->
+    <h2
+      class="ts-primary-subheading-m text-balance text-text-primary-default first-letter:uppercase"
+    >
+      {title}
+    </h2>
     <p class="ts-primary-body-s text-text-secondary-default">{note}</p>
   </div>
   <div class="col-span-3">
-    <PillNav label="Period" items={kinds} />
+    <PillNav label={m.period_nav()} items={kinds} />
   </div>
 </div>

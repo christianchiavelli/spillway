@@ -3,13 +3,18 @@ import WindPower from '~icons/material-symbols/wind-power-outline-rounded';
 
 import type { Reason, Source, Subsystem } from '#lib/api/generated/types.gen.ts';
 import type { Icon } from '#lib/components/ui/icon.ts';
+import { m } from '#lib/paraglide/messages.js';
 
 // A turbine and a panel, not the weather: what curtailment holds back is the
 // plants' output. The classes are written out whole, so Tailwind finds them.
+// Every label here is a getter, read in the edition of the page that shows it:
+// a constant would hold the first edition the server happened to render.
 export const sources = [
   {
     value: 'wind',
-    label: 'Wind',
+    get label() {
+      return m.source_wind();
+    },
     icon: WindPower,
     fill: 'fill-chart-wind',
     stroke: 'stroke-chart-wind',
@@ -17,7 +22,9 @@ export const sources = [
   },
   {
     value: 'solar',
-    label: 'Solar',
+    get label() {
+      return m.source_solar();
+    },
     icon: SolarPower,
     fill: 'fill-chart-solar',
     stroke: 'stroke-chart-solar',
@@ -38,10 +45,30 @@ export function sourceOf(value: Source) {
 
 /** The ONS's names for its subsystems, in its usual order, north to south. */
 export const subsystems = [
-  { value: 'N', label: 'North' },
-  { value: 'NE', label: 'Northeast' },
-  { value: 'SE', label: 'Southeast and Centre-West' },
-  { value: 'S', label: 'South' },
+  {
+    value: 'N',
+    get label() {
+      return m.subsystem_n();
+    },
+  },
+  {
+    value: 'NE',
+    get label() {
+      return m.subsystem_ne();
+    },
+  },
+  {
+    value: 'SE',
+    get label() {
+      return m.subsystem_se();
+    },
+  },
+  {
+    value: 'S',
+    get label() {
+      return m.subsystem_s();
+    },
+  },
 ] as const satisfies readonly { value: Subsystem; label: string }[];
 
 export function subsystemLabel(value: Subsystem): string {
@@ -49,12 +76,18 @@ export function subsystemLabel(value: Subsystem): string {
 }
 
 /** The reasons the ONS gives, in plain words, and what each one means. */
-export const reasons = {
-  ENE: {
-    label: 'Supply above demand',
-    meaning: 'The plants could make more than the country was using',
+const reason = (label: () => string, meaning: () => string) => ({
+  get label() {
+    return label();
   },
-  CNF: { label: 'Grid reliability', meaning: 'Held back to keep the grid stable' },
-  REL: { label: 'Transmission limits', meaning: 'The lines could not carry it' },
-  PAR: { label: 'Connection terms', meaning: 'A limit agreed when the plant was connected' },
+  get meaning() {
+    return meaning();
+  },
+});
+
+export const reasons = {
+  ENE: reason(m.reason_ene, m.reason_ene_meaning),
+  CNF: reason(m.reason_cnf, m.reason_cnf_meaning),
+  REL: reason(m.reason_rel, m.reason_rel_meaning),
+  PAR: reason(m.reason_par, m.reason_par_meaning),
 } as const satisfies Record<Reason, { label: string; meaning: string }>;

@@ -1,5 +1,8 @@
 import { type Cookies, type RequestEvent, redirect } from '@sveltejs/kit';
 
+import { resolve } from '$app/paths';
+import { localized } from '#lib/i18n.ts';
+
 /**
  * The session token lives in one cookie the browser keeps but never reads:
  * HTTP-only, so no script can take it, and SameSite=Lax, so forms on other
@@ -30,6 +33,13 @@ export function endSession(cookies: Cookies, url: URL) {
 }
 
 /**
+ * Sign in, in the edition being read, and then come back. The address to come
+ * back to is the one asked for, edition and all, so it is never localized again.
+ */
+const signIn = (back: string) =>
+  localized(resolve(`/sign-in?${new URLSearchParams({ redirectTo: back }).toString()}`));
+
+/**
  * Returns the signed-in session, or sends the visitor to sign in and then
  * back to the page they asked for.
  */
@@ -37,7 +47,7 @@ export function requireSession(event: RequestEvent) {
   const { session } = event.locals;
   if (session === null) {
     const back = event.url.pathname + event.url.search;
-    redirect(303, `/sign-in?${new URLSearchParams({ redirectTo: back }).toString()}`);
+    redirect(303, signIn(back));
   }
   return session;
 }
@@ -48,7 +58,7 @@ export function requireSession(event: RequestEvent) {
  */
 export function sessionLost(event: RequestEvent): never {
   endSession(event.cookies, event.url);
-  redirect(303, `/sign-in?${new URLSearchParams({ redirectTo: event.url.pathname }).toString()}`);
+  redirect(303, signIn(event.url.pathname));
 }
 
 /**
@@ -56,7 +66,10 @@ export function sessionLost(event: RequestEvent): never {
  * site, and the alerts otherwise. Anything else, like `//evil.example` or an
  * absolute URL, would turn the sign-in form into a way to send people away.
  */
-export function safeRedirectTarget(raw: string | null, fallback = '/alerts'): string {
+export function safeRedirectTarget(
+  raw: string | null,
+  fallback: string = localized(resolve('/alerts')),
+): string {
   if (raw === null || !raw.startsWith('/') || raw.startsWith('//') || raw.startsWith('/\\')) {
     return fallback;
   }

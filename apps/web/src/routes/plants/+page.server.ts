@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 
 import { readPage, readSource, readSubsystem } from '#lib/features/curtailment/filters.ts';
 import { readPeriod } from '#lib/features/curtailment/periods.ts';
+import { m } from '#lib/paraglide/messages.js';
 import { api } from '#lib/server/api.ts';
 import { published } from '#lib/server/published.ts';
 
@@ -15,7 +16,7 @@ export const load: PageServerLoad = async (event) => {
   const subsystem = readSubsystem(event.url);
   const page = readPage(event.url);
   if (query === null || source === null || subsystem === null || page === null) {
-    error(404, 'There is no such list of plants.');
+    error(404, m.error_no_plants());
   }
   const result = await api(event).listPlants({
     ...query,

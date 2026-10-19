@@ -4,6 +4,7 @@
   import ChartCard from '#lib/components/charts/ChartCard.svelte';
   import Legend from '#lib/components/charts/Legend.svelte';
   import Table from '#lib/components/ui/Table.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 
   import { dayOfMonth, energy, int, longDay, one, shortDay, weekdayShort } from './format.ts';
   import { sources } from './grid.ts';
@@ -44,7 +45,7 @@
     const v = slots[i];
     if (!v) return null;
     const heading = byHalfHour
-      ? `${halves[i]?.time} to ${halves[i]?.end}`
+      ? m.over_time_span({ from: halves[i]?.time ?? '', to: halves[i]?.end ?? '' })
       : shortDay(days[i]?.day ?? '');
     // In the unit of the chart's axis: MWh for half hours, GWh for days.
     const figure = (mwh: number) => (byHalfHour ? `${int(mwh)} MWh` : energy(mwh));
@@ -57,10 +58,8 @@
 </script>
 
 <ChartCard
-  title={byHalfHour ? 'Hour by Hour' : 'Day by Day'}
-  description={byHalfHour
-    ? 'Energy curtailed in each half hour, in megawatt hours (MWh)'
-    : 'Energy curtailed each day, in gigawatt hours (GWh)'}
+  title={byHalfHour ? m.over_time_hours() : m.over_time_days()}
+  description={byHalfHour ? m.over_time_hours_description() : m.over_time_days_description()}
 >
   {#snippet legend()}
     <Legend series={sources} />
@@ -68,16 +67,18 @@
 
   <Columns
     title={byHalfHour
-      ? `Energy curtailed in each half hour of ${title}`
-      : `Energy curtailed each day, ${title}`}
+      ? m.over_time_hours_chart({ period: title })
+      : m.over_time_days_chart({ period: title })}
     series={sources}
     {values}
     tick={(v: number) => int(v)}
     {xLabel}
     {xLabelShort}
     peak={(i: number, total: number) =>
-      byHalfHour ? `${int(total)} MWh at ${halves[i]?.time}` : `${one(total)} GWh`}
-    emptyNote={byHalfHour ? undefined : 'Not published yet'}
+      byHalfHour
+        ? m.over_time_peak_hour({ total: int(total), time: halves[i]?.time ?? '' })
+        : `${one(total)} GWh`}
+    emptyNote={byHalfHour ? undefined : m.over_time_not_published()}
     {tip}
     class="h-[13.75rem] mobile:h-[18.75rem]"
   />
@@ -85,12 +86,12 @@
   {#snippet table()}
     <Table
       caption={byHalfHour
-        ? `Energy curtailed in each half hour of ${title}, in MWh`
-        : `Energy curtailed each day, ${title}, in GWh`}
+        ? m.over_time_hours_caption({ period: title })
+        : m.over_time_days_caption({ period: title })}
       columns={[
-        { label: byHalfHour ? 'Half hour' : 'Day' },
-        { label: 'Wind', right: true },
-        { label: 'Solar', right: true },
+        { label: byHalfHour ? m.over_time_half_hour() : m.over_time_day() },
+        { label: m.table_wind(), right: true },
+        { label: m.table_solar(), right: true },
       ]}
       minWidth="mobile:min-w-[20rem]"
     >
@@ -98,7 +99,7 @@
         {#each halves.filter((h) => h.values !== null) as h (h.time)}
           <tr class="ts-primary-body-m text-text-primary-default even:bg-surface-zebra">
             <th scope="row" class="h-[2.25rem] px-300 text-left ts-primary-subheading-s"
-              >{h.time} to {h.end}</th
+              >{m.over_time_span({ from: h.time, to: h.end })}</th
             >
             <td class="px-300 text-right tabular-nums">{int(h.values?.wind ?? 0)}</td>
             <td class="px-300 text-right tabular-nums">{int(h.values?.solar ?? 0)}</td>

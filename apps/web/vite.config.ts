@@ -1,3 +1,4 @@
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
@@ -7,6 +8,23 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig(({ command }) => ({
   plugins: [
+    // The messages, compiled to a function each. The address alone picks the
+    // edition: English at the root, Portuguese under /pt-br, never the
+    // browser's language or a cookie (ADR 0026).
+    paraglideVitePlugin({
+      project: './project.inlang',
+      outdir: './src/lib/paraglide',
+      strategy: ['url', 'baseLocale'],
+      urlPatterns: [
+        {
+          pattern: '/:path(.*)?',
+          localized: [
+            ['pt-BR', '/pt-br/:path(.*)?'],
+            ['en', '/:path(.*)?'],
+          ],
+        },
+      ],
+    }),
     tailwindcss(),
     sveltekit({
       adapter: adapter(),
@@ -23,6 +41,9 @@ export default defineConfig(({ command }) => ({
       // for https unless a proxy says otherwise, and refuses the plain-HTTP
       // forms of http://localhost. The dev server keeps its own address.
       paths: {
+        // Root-relative links, /alerts and not ../alerts: an edition puts its
+        // prefix in front of a link, which a link relative to the page lacks.
+        relative: false,
         origin:
           command === 'build' ? (process.env['ORIGIN'] ?? 'http://localhost:8090') : undefined,
       },

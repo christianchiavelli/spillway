@@ -5,6 +5,7 @@
   import { dayAndMonth, int, shortDay } from '#lib/features/curtailment/format.ts';
   import { sourceOf, subsystemLabel } from '#lib/features/curtailment/grid.ts';
   import { addDays } from '#lib/features/curtailment/series.ts';
+  import { m } from '#lib/paraglide/messages.js';
 
   type Props = {
     recent: DailyCurtailment;
@@ -27,7 +28,11 @@
     threshold === undefined ? [] : days.flatMap((v, i) => (v > threshold ? [i] : [])),
   );
   const max = $derived(Math.max(0, ...days, threshold ?? 0));
-  const tick = (v: number) => (max >= 10_000 && v >= 1000 ? `${int(v / 1000)}K` : int(v));
+  const tick = (v: number) =>
+    max >= 10_000 && v >= 1000 ? m.preview_thousands({ n: int(v / 1000) }) : int(v);
+  // Its own sentence for each source: in Portuguese the adjective agrees with
+  // "usinas", so it is not the source's label lowercased.
+  const choose = $derived(source === 'solar' ? m.preview_choose_solar() : m.preview_choose_wind());
 </script>
 
 {#if subsystem === undefined}
@@ -36,17 +41,15 @@
     subsystem is chosen. The icon is the chosen source's, so it follows the form.
   -->
   <div class="flex min-h-[16.25rem] flex-1 items-center justify-center">
-    <EmptyState
-      icon={s.icon}
-      title="No subsystem chosen"
-      description={`Choose one to see what its ${s.label.toLowerCase()} plants lost.`}
-    />
+    <EmptyState icon={s.icon} title={m.preview_no_subsystem()} description={choose} />
   </div>
 {:else}
   <Columns
-    title={`${s.label} in the ${subsystemLabel(subsystem)}, the last ${days.length} days${
-      threshold === undefined ? '' : ', against the threshold'
-    }`}
+    title={(threshold === undefined ? m.preview_chart : m.preview_chart_threshold)({
+      source: s.label,
+      subsystem: subsystemLabel(subsystem),
+      days: int(days.length),
+    })}
     series={[s]}
     values={days.map((v) => [v])}
     {tick}
@@ -54,7 +57,7 @@
     xLabelShort={(i: number) => (i % 14 === 0 ? shortDay(dayAt(i)) : null)}
     rule={threshold === undefined
       ? undefined
-      : { value: threshold, label: `${int(threshold)} MWh`, caption: 'threshold' }}
+      : { value: threshold, label: `${int(threshold)} MWh`, caption: m.preview_threshold() }}
     fill={(i: number) =>
       threshold === undefined || (days[i] ?? 0) > threshold ? s.fill : 'fill-chart-muted'}
     tip={(i: number) => ({
@@ -66,14 +69,18 @@
   />
   <p class="ts-primary-body-l text-text-primary-default" aria-live="polite">
     {#if threshold === undefined}
-      Enter a daily threshold to see how often it would have fired.
+      {m.preview_enter_threshold()}
     {:else if fired.length === 0}
-      It would not have fired in the last {days.length} days.
+      {m.preview_never({ days: int(days.length) })}
     {:else}
-      It would have fired on
+      {m.preview_fired_on()}
       <span class="ts-primary-subheading-m"
-        >{fired.length} of the last {days.length} {days.length === 1 ? 'day' : 'days'}</span
-      >, last on {dayAndMonth(dayAt(fired.at(-1) ?? 0))}.
+        >{m.preview_fired_count({
+          count: days.length,
+          fired: int(fired.length),
+          days: int(days.length),
+        })}</span
+      >{m.preview_fired_last({ day: dayAndMonth(dayAt(fired.at(-1) ?? 0)) })}
     {/if}
   </p>
 {/if}

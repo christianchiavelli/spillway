@@ -2,6 +2,7 @@
   import type { PlantCurtailment } from '#lib/api/generated/types.gen.ts';
   import DataBar from '#lib/components/charts/DataBar.svelte';
   import Table from '#lib/components/ui/Table.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 
   import { int, mwh, pct, shareOf } from './format.ts';
   import { sourceOf, subsystemLabel } from './grid.ts';
@@ -21,7 +22,7 @@
 
   /** "36 h", or minutes under an hour. */
   const limited = (minutes: number) =>
-    minutes < 60 ? `${int(minutes)} min` : `${int(minutes / 60)} h`;
+    minutes < 60 ? m.plants_minutes({ n: int(minutes) }) : m.plants_hours({ n: int(minutes / 60) });
 
   // On a phone a row is the plant and what it lost; the rest is from mobile up,
   // but the subsystem, the longest name, from laptop up: below it the table
@@ -33,14 +34,14 @@
 <Table
   {caption}
   columns={[
-    { label: '#', class: wide },
-    { label: 'Plant' },
-    { label: 'State', class: wide },
-    ...(full ? [{ label: 'Subsystem', class: widest }] : []),
-    { label: 'Source', class: wide },
-    { label: 'Curtailed', right: true },
-    { label: 'Share of Its Potential', right: true, class: wide },
-    ...(full ? [{ label: 'Time Limited', right: true, class: wide }] : []),
+    { label: m.plants_rank(), class: wide },
+    { label: m.plants_plant() },
+    { label: m.plants_state(), class: wide },
+    ...(full ? [{ label: m.plants_subsystem(), class: widest }] : []),
+    { label: m.plants_source(), class: wide },
+    { label: m.plants_curtailed(), right: true },
+    { label: m.plants_share(), right: true, class: wide },
+    ...(full ? [{ label: m.plants_time(), right: true, class: wide }] : []),
   ]}
   minWidth={full ? 'mobile:min-w-[48rem] laptop:min-w-[60rem]' : 'mobile:min-w-[44rem]'}
 >

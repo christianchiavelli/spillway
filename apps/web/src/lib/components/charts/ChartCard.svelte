@@ -5,6 +5,7 @@
 
   import Card from '#lib/components/ui/Card.svelte';
   import SegmentedControl from '#lib/components/ui/SegmentedControl.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 
   type Props = {
     title: string;
@@ -31,14 +32,14 @@
   <Card {title} {description}>
     {#snippet aside()}
       <SegmentedControl
-        legend="Show as"
+        legend={m.chart_show_as()}
         hideLegend
         size="sm"
         name={`${id}-view`}
         value="chart"
         options={[
-          { value: 'chart', label: 'Chart', icon: BarChart },
-          { value: 'table', label: 'Table', icon: TableIcon },
+          { value: 'chart', label: m.chart_chart(), icon: BarChart },
+          { value: 'table', label: m.chart_table(), icon: TableIcon },
         ]}
       />
     {/snippet}

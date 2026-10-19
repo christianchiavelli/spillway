@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { m } from '#lib/paraglide/messages.js';
+
   import type { Tip } from './geometry.ts';
 
   type Props = {
@@ -56,7 +58,7 @@
     {@const y = PAD + 12 + 14 + tip.rows.length * ROW + 10}
     <line x1={PAD} x2={W - PAD} y1={y - 0.5} y2={y - 0.5} class="stroke-stroke-neutral-on-dark" />
     <text x={PAD} y={y + ROW / 2} dy="0.32em" class="fill-text-on-dark-secondary ts-primary-body-s"
-      >Total</text
+      >{m.tooltip_total()}</text
     >
     <text
       x={W - PAD}

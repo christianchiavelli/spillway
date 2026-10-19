@@ -12,6 +12,8 @@
     passwordHint,
   } from '#lib/features/account/account.ts';
   import { enhanceForm } from '#lib/forms/enhance.ts';
+  import { localized } from '#lib/i18n.ts';
+  import { m } from '#lib/paraglide/messages.js';
 
   import type { PageProps } from './$types';
 
@@ -35,19 +37,19 @@
 </script>
 
 <svelte:head>
-  <title>Create an Account | Spillway</title>
+  <title>{m.sign_up_head()} | Spillway</title>
 </svelte:head>
 
 <div class="mx-auto flex w-full max-w-[28rem] flex-col gap-600 px-600 py-1200">
   <div class="flex flex-col gap-200">
-    <h1 class="ts-secondary-heading-s text-text-primary-default">Create an Account</h1>
+    <h1 class="ts-secondary-heading-s text-text-primary-default">{m.sign_up_title()}</h1>
     <p class="ts-primary-body-m text-text-secondary-default">
-      An account keeps your alerts. It needs an email address and a password, nothing else.
+      {m.sign_up_lede()}
     </p>
   </div>
 
   {#if problems.length > 0}
-    <ErrorSummary title="Check the form" items={problems} />
+    <ErrorSummary title={m.form_check()} items={problems} />
   {/if}
 
   <form
@@ -58,7 +60,7 @@
   >
     <TextField
       id={ids.email}
-      label="Email address"
+      label={m.form_email()}
       name="email"
       type="email"
       autocomplete="email"
@@ -70,30 +72,32 @@
     />
     <TextField
       id={ids.password}
-      label="Password"
+      label={m.form_password()}
       name="password"
       type="password"
       autocomplete="new-password"
       minlength={limits.passwordMinLength}
       maxlength={limits.passwordMaxLength}
       required
-      hint={passwordHint}
+      hint={passwordHint()}
       error={accountError('password', form?.errors.password)}
     />
     <Button type="submit" aria-disabled={pending || undefined}>
-      {pending ? 'Creating Account…' : 'Create Account'}
+      {pending ? m.sign_up_pending() : m.sign_up_submit()}
     </Button>
   </form>
 
   <p class="ts-primary-body-m text-text-secondary-default">
-    Already have an account?
+    {m.sign_up_have_one()}
     <a
-      href={redirectTo === null
-        ? resolve('/sign-in')
-        : resolve(`/sign-in?${new URLSearchParams({ redirectTo }).toString()}`)}
+      href={localized(
+        redirectTo === null
+          ? resolve('/sign-in')
+          : resolve(`/sign-in?${new URLSearchParams({ redirectTo }).toString()}`),
+      )}
       class="ts-primary-subheading-s text-text-primary-link hover:text-text-primary-link-hover"
     >
-      Sign in
+      {m.sign_up_sign_in()}
     </a>
   </p>
 </div>

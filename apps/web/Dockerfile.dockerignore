@@ -8,3 +8,4 @@
 apps/web/node_modules
 apps/web/.svelte-kit
 apps/web/build
+apps/web/src/lib/paraglide

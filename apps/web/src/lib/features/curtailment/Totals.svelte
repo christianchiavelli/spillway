@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Curtailment } from '#lib/api/generated/types.gen.ts';
+  import { m } from '#lib/paraglide/messages.js';
 
   import { compared, gwh, int, pct, shareOf } from './format.ts';
   import { sources } from './grid.ts';
@@ -38,7 +39,7 @@
       <span class="ts-primary-subheading-l">{hero.unit}</span>
     </dd>
     <dd class="ts-primary-body-m text-text-secondary-default">
-      {pct(shareOf(total))} of what the plants could have generated
+      {m.totals_share_generated({ share: pct(shareOf(total)) })}
     </dd>
     {#if before !== undefined && overview.previousCurtailedMwh !== undefined}
       <dd class="ts-primary-body-m text-text-primary-default">
@@ -64,16 +65,19 @@
         <span class="ts-primary-subheading-s">{f.unit}</span>
       </dd>
       <dd class="ts-primary-body-m text-text-secondary-default">
-        {pct(shareOf(e))} of its potential
+        {m.totals_share_potential({ share: pct(shareOf(e)) })}
       </dd>
     </div>
   {/each}
 
   <div class="col-span-2 flex flex-col gap-200 p-600 laptop:col-span-1">
-    <dt class="ts-primary-subheading-s text-text-secondary-default">Plants limited</dt>
+    <dt class="ts-primary-subheading-s text-text-secondary-default">{m.totals_plants_limited()}</dt>
     <dd class="ts-primary-subheading-l text-text-primary-default">{int(overview.plantsLimited)}</dd>
     <dd class="ts-primary-body-m text-text-secondary-default">
-      of the {int(overview.plantsReporting)} reporting, at some point {inThePeriod(p)}
+      {m.totals_plants_reporting({
+        reporting: int(overview.plantsReporting),
+        inPeriod: inThePeriod(p),
+      })}
     </dd>
   </div>
 </dl>

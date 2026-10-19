@@ -1,5 +1,7 @@
 import { type Handle, type HandleServerError, sequence } from '@sveltejs/kit/hooks';
 
+import { m } from '#lib/paraglide/messages.js';
+import { paraglideMiddleware } from '#lib/paraglide/server.js';
 import { api } from '#lib/server/api.ts';
 import { log } from '#lib/server/log.ts';
 import { endSession, keepSession, readSessionToken } from '#lib/server/session.ts';
@@ -12,6 +14,16 @@ const identify: Handle = async ({ event, resolve }) => {
   response.headers.set('X-Request-Id', event.locals.requestId);
   return response;
 };
+
+/**
+ * The edition the address names, for every message and format the request
+ * renders, and for <html lang>: Paraglide keeps it for the request's whole
+ * run, load functions and actions included.
+ */
+const localize: Handle = ({ event, resolve }) =>
+  paraglideMiddleware(event.request, ({ locale }) =>
+    resolve(event, { transformPageChunk: ({ html }) => html.replace('%lang%', locale) }),
+  );
 
 /**
  * The headers the content security policy in vite.config.ts does not cover.
@@ -51,16 +63,19 @@ const authenticate: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-export const handle = sequence(identify, secureHeaders, authenticate);
+export const handle = sequence(identify, localize, secureHeaders, authenticate);
 
 /**
  * Errors the app expects (a 404, a redirect to sign in) keep SvelteKit's
- * answer. Failures get the request id as a reference on the error page, and
- * the ones nobody caught are logged here, with the cause the page never shows.
+ * answer, but in the edition's words: SvelteKit's own are English. Failures
+ * get the request id as a reference on the error page, and the ones nobody
+ * caught are logged here, with the cause the page never shows.
  */
 export const handleError: HandleServerError = (caught) => {
   const { event } = caught;
-  if (caught.kind === 'framework' || caught.kind === 'validation') return;
+  if (caught.kind === 'framework' || caught.kind === 'validation') {
+    return caught.error.status === 404 ? undefined : { message: m.error_refused() };
+  }
   if (caught.kind === 'app') {
     return caught.error.status >= 500 ? { reference: event.locals.requestId } : undefined;
   }
@@ -71,7 +86,7 @@ export const handleError: HandleServerError = (caught) => {
   });
   return {
     status: 500,
-    message: 'Something went wrong on our side.',
+    message: m.error_our_side(),
     reference: event.locals.requestId,
   };
 };

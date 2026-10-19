@@ -10,7 +10,10 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { buttonStyles } from '#lib/components/ui/button-styles.ts';
+  import { localized } from '#lib/i18n.ts';
+  import { m } from '#lib/paraglide/messages.js';
 
+  import LanguageSwitch from './LanguageSwitch.svelte';
   import Logo from './Logo.svelte';
 
   type Props = {
@@ -23,10 +26,10 @@
 
   // The data is open to everyone; Alerts asks a visitor to sign in first.
   const nav = [
-    { route: '/', label: 'Overview', icon: BarChart },
-    { route: '/plants', label: 'Plants', icon: Factory },
-    { route: '/history', label: 'History', icon: History },
-    { route: '/alerts', label: 'Alerts', icon: Notifications },
+    { route: '/', label: m.nav_overview, icon: BarChart },
+    { route: '/plants', label: m.nav_plants, icon: Factory },
+    { route: '/history', label: m.nav_history, icon: History },
+    { route: '/alerts', label: m.nav_alerts, icon: Notifications },
   ] as const;
 
   const isCurrent = (route: string) => {
@@ -39,42 +42,49 @@
   href="#main"
   class="sr-only z-(--z-toast) rounded-200 bg-surface-container-primary px-400 py-300 ts-primary-button-l text-text-primary-default focus:not-sr-only focus:fixed focus:top-300 focus:left-300"
 >
-  Skip to content
+  {m.shell_skip()}
 </a>
 
 <!-- The chrome: a dark header across the top and a dark rail on the left. -->
 <header
   class="sticky top-0 z-(--z-header) flex h-[3.5rem] items-center gap-600 bg-surface-primary-cool-dark px-400"
 >
-  <a href={resolve('/')} class="rounded-200">
+  <a href={localized(resolve('/'))} class="rounded-200">
     <Logo />
-    <span class="sr-only">, home</span>
+    <span class="sr-only">{m.shell_home()}</span>
   </a>
-  {#if email === null}
-    <div class="ml-auto flex items-center gap-300">
-      <a href={resolve('/sign-in')} class={buttonStyles({ variant: 'on-dark', size: 'sm' })}>
-        <Login width={16} height={16} />
-        Sign In
-      </a>
-      <!-- On a phone the header has room for one button; Sign In leads to the other. -->
-      <span class="hidden mobile:block">
-        <a href={resolve('/sign-up')} class={buttonStyles({ variant: 'primary', size: 'sm' })}>
-          Create Account
+  <div class="ml-auto flex items-center gap-400">
+    <LanguageSwitch />
+    {#if email === null}
+      <div class="flex items-center gap-300">
+        <a
+          href={localized(resolve('/sign-in'))}
+          class={buttonStyles({ variant: 'on-dark', size: 'sm' })}
+        >
+          <Login width={16} height={16} />
+          {m.shell_sign_in()}
         </a>
-      </span>
-    </div>
-  {:else}
-    <div class="ml-auto flex items-center gap-400">
+        <!-- On a phone the header has room for one button; Sign In leads to the other. -->
+        <span class="hidden mobile:block">
+          <a
+            href={localized(resolve('/sign-up'))}
+            class={buttonStyles({ variant: 'primary', size: 'sm' })}
+          >
+            {m.shell_create_account()}
+          </a>
+        </span>
+      </div>
+    {:else}
       <span class="hidden ts-primary-body-m text-text-on-dark-secondary mobile:inline">{email}</span
       >
-      <form method="POST" action={resolve('/sign-out')}>
+      <form method="POST" action={localized(resolve('/sign-out'))}>
         <button type="submit" class={buttonStyles({ variant: 'on-dark', size: 'sm' })}>
           <Logout width={16} height={16} />
-          Sign Out
+          {m.shell_sign_out()}
         </button>
       </form>
-    </div>
-  {/if}
+    {/if}
+  </div>
 </header>
 
 <div class="flex min-h-[calc(100dvh-3.5rem)]">
@@ -83,30 +93,29 @@
     long, and an item sliding under the header would be half a target.
   -->
   <nav
-    aria-label="Main"
+    aria-label={m.shell_nav()}
     class="sticky top-[3.5rem] h-[calc(100dvh-3.5rem)] w-[4rem] shrink-0 self-start bg-surface-primary-cool-dark px-[0.375rem] py-500"
   >
     <ul class="flex flex-col items-center gap-300">
       {#each nav as item (item.route)}
         <!--
-          By route, not by URL: on the server, resolve() writes a relative
-          href (./alerts), which no pathname starts with, and the page would
-          arrive with no item marked current.
+          By route, not by URL: the same route is /alerts and /pt-br/alerts.
+          A label too long for the rail, like Visão geral, wraps centred.
         -->
         {@const current = isCurrent(item.route)}
         <li>
           <a
-            href={resolve(item.route)}
+            href={localized(resolve(item.route))}
             aria-current={current ? 'page' : undefined}
             class={[
-              'flex w-[3.25rem] flex-col items-center gap-100 rounded-200 py-200 ts-primary-caption text-text-on-dark-primary transition-colors duration-300',
+              'flex w-[3.25rem] flex-col items-center gap-100 rounded-200 py-200 text-center ts-primary-caption text-text-on-dark-primary transition-colors duration-300',
               current
                 ? 'bg-surface-primary-default hover:bg-surface-primary-hover'
                 : 'hover:bg-surface-primary-dark',
             ]}
           >
             <item.icon width={20} height={20} />
-            {item.label}
+            {item.label()}
           </a>
         </li>
       {/each}
@@ -121,16 +130,15 @@
       class="flex flex-wrap justify-end gap-400 border-t border-stroke-neutral-default bg-surface-container-primary px-600 py-500 ts-primary-button-s text-text-secondary-default"
     >
       <span>
-        Built for the
+        {m.shell_built_for()}
         <a
           href="https://dados.ons.org.br"
           rel="external noopener"
-          class="text-text-primary-link hover:text-text-primary-link-hover"
-          >ONS's open curtailment data</a
+          class="text-text-primary-link hover:text-text-primary-link-hover">{m.shell_ons_data()}</a
         >
       </span>
       <span class="mobile:border-l mobile:border-stroke-neutral-default mobile:pl-400"
-        >Spillway is a portfolio project</span
+        >{m.shell_portfolio()}</span
       >
     </footer>
   </div>

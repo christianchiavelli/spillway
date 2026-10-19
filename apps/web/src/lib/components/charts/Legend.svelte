@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { m } from '#lib/paraglide/messages.js';
+
   import type { Series } from './geometry.ts';
 
   type Props = {
@@ -11,7 +13,7 @@
 </script>
 
 <ul
-  aria-label="Legend"
+  aria-label={m.legend()}
   class="flex items-center gap-500 ts-primary-body-s text-text-secondary-default"
 >
   {#each series as s (s.label)}

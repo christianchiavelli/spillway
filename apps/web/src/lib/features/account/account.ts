@@ -1,5 +1,6 @@
 import { EmailSchema, NewAccountSchema } from '#lib/api/generated/schemas.gen.ts';
 import type { FieldErrorCode } from '#lib/forms/errors.ts';
+import { m } from '#lib/paraglide/messages.js';
 
 /** The fields of the sign-in and sign-up forms, in the order they show them. */
 export const accountFields = ['email', 'password'] as const;
@@ -12,19 +13,20 @@ export const limits = {
   passwordMaxLength: NewAccountSchema.properties.password.maxLength,
 } as const;
 
-export const passwordHint = `At least ${limits.passwordMinLength} characters. A few unrelated words in a row make a strong one.`;
+export const passwordHint = () => m.account_password_hint({ min: limits.passwordMinLength });
 
-const messages: Record<AccountField, Partial<Record<FieldErrorCode, string>>> = {
+// Functions, not strings, so each request reads them in its own edition.
+const messages: Record<AccountField, Partial<Record<FieldErrorCode, () => string>>> = {
   email: {
-    required: 'Enter your email address',
-    invalid: 'Enter an email address like name@example.com',
-    too_long: `Use an email address of ${limits.emailMaxLength} characters or fewer`,
-    taken: 'An account already uses this email address',
+    required: m.account_email_required,
+    invalid: m.account_email_invalid,
+    too_long: () => m.account_email_too_long({ max: limits.emailMaxLength }),
+    taken: m.account_email_taken,
   },
   password: {
-    required: 'Enter a password',
-    too_short: `Use at least ${limits.passwordMinLength} characters`,
-    too_long: `Use ${limits.passwordMaxLength} characters or fewer`,
+    required: m.account_password_required,
+    too_short: () => m.account_password_too_short({ min: limits.passwordMinLength }),
+    too_long: () => m.account_password_too_long({ max: limits.passwordMaxLength }),
   },
 };
 
@@ -34,5 +36,5 @@ export function accountError(
   code: FieldErrorCode | undefined,
 ): string | undefined {
   if (code === undefined) return undefined;
-  return messages[field][code] ?? 'Check this field';
+  return (messages[field][code] ?? m.form_check_field)();
 }
