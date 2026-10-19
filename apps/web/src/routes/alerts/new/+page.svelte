@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Downloading from '~icons/material-symbols/downloading-rounded';
   import NotificationAdd from '~icons/material-symbols/notification-add-outline-rounded';
 
   import { enhance } from '$app/forms';
@@ -6,6 +7,7 @@
   import Button from '#lib/components/ui/Button.svelte';
   import { buttonStyles } from '#lib/components/ui/button-styles.ts';
   import Card from '#lib/components/ui/Card.svelte';
+  import EmptyState from '#lib/components/ui/EmptyState.svelte';
   import ErrorSummary from '#lib/components/ui/ErrorSummary.svelte';
   import PageHeader from '#lib/components/ui/PageHeader.svelte';
   import AlertFields from '#lib/features/alerts/AlertFields.svelte';
@@ -138,10 +140,13 @@
         : `${sources.find((s) => s.value === source)?.label} in the ${subsystemLabel(subsystem)}, day by day, against your threshold.`}
     >
       {#if data.recent === null}
-        <p class="ts-primary-body-l text-text-secondary-default">
-          The ONS's data is still loading, so there is nothing to preview yet. The alert works all
-          the same.
-        </p>
+        <div class="flex flex-1 items-center justify-center">
+          <EmptyState
+            icon={Downloading}
+            title="Nothing to preview yet"
+            description="The ONS's data is still loading. The alert works all the same."
+          />
+        </div>
       {:else}
         <Preview recent={data.recent} {source} {subsystem} {threshold} />
       {/if}

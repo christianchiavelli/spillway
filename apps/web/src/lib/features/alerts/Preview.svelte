@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { DailyCurtailment, Source, Subsystem } from '#lib/api/generated/types.gen.ts';
   import Columns from '#lib/components/charts/Columns.svelte';
+  import EmptyState from '#lib/components/ui/EmptyState.svelte';
   import { dayAndMonth, int, shortDay } from '#lib/features/curtailment/format.ts';
   import { sourceOf, subsystemLabel } from '#lib/features/curtailment/grid.ts';
   import { addDays } from '#lib/features/curtailment/series.ts';
@@ -30,10 +31,17 @@
 </script>
 
 {#if subsystem === undefined}
-  <p class="ts-primary-body-l text-text-secondary-default">
-    Choose a subsystem to see what its {s.label.toLowerCase()} plants lost in the last
-    {days.length || 30} days the ONS has published.
-  </p>
+  <!--
+    Where the chart will go, and as tall, so it takes this place once a
+    subsystem is chosen. The icon is the chosen source's, so it follows the form.
+  -->
+  <div class="flex min-h-[16.25rem] flex-1 items-center justify-center">
+    <EmptyState
+      icon={s.icon}
+      title="No subsystem chosen"
+      description={`Choose one to see what its ${s.label.toLowerCase()} plants lost.`}
+    />
+  </div>
 {:else}
   <Columns
     title={`${s.label} in the ${subsystemLabel(subsystem)}, the last ${days.length} days${

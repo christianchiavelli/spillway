@@ -1,21 +1,41 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
+  import type { Icon as IconComponent } from './icon.ts';
+
   type Props = {
     title: string;
     description: string;
     headingLevel?: 2 | 3;
-    /** The illustration, drawn for the place it is shown in. */
-    art: Snippet;
     children?: Snippet;
-  };
+  } & (
+    | {
+        /** The illustration, drawn for the place it is shown in. */
+        art: Snippet;
+        icon?: never;
+      }
+    | {
+        /** In place of an illustration, where one would be too much, as inside a card. */
+        icon: IconComponent;
+        art?: never;
+      }
+  );
 
-  let { title, description, headingLevel = 3, art, children }: Props = $props();
+  let { title, description, headingLevel = 3, art, icon: Icon, children }: Props = $props();
 </script>
 
 <!-- An illustrated message, small size, with a heading that fits its place. -->
 <div class="flex flex-col items-center gap-500 px-600 py-700 text-center">
-  <div aria-hidden="true" class="w-[9.875rem]">{@render art()}</div>
+  {#if Icon}
+    <div
+      aria-hidden="true"
+      class="flex size-[2.5rem] items-center justify-center rounded-200 bg-surface-container-secondary text-icon-secondary"
+    >
+      <Icon width={20} height={20} />
+    </div>
+  {:else}
+    <div aria-hidden="true" class="w-[9.875rem]">{@render art?.()}</div>
+  {/if}
   <div class="flex flex-col gap-300">
     <svelte:element
       this={`h${headingLevel}`}

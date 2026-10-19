@@ -34,6 +34,9 @@ describe('Preview', () => {
 
   it('asks for what it still needs', async () => {
     await render(Preview, { recent, source: 'wind', subsystem: undefined, threshold: undefined });
-    await expect.element(page.getByText(/Choose a subsystem/)).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: 'No subsystem chosen' })).toBeVisible();
+    await expect
+      .element(page.getByText('Choose one to see what its wind plants lost.'))
+      .toBeVisible();
   });
 });

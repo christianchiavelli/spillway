@@ -9,7 +9,7 @@ test('an alert is created, refused when it repeats a name, and deleted', async (
 
   await page.getByRole('link', { name: 'New Alert' }).first().click();
   await expect(page).toHaveURL(/\/alerts\/new$/);
-  await expect(page.getByText(/Choose a subsystem to see/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'No subsystem chosen' })).toBeVisible();
 
   // Nothing filled in: the summary takes focus and links to each field.
   await page.getByRole('button', { name: 'Create Alert' }).click();
