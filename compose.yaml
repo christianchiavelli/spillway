@@ -1,7 +1,8 @@
 # The whole of Spillway on one machine: `docker compose up --wait --build`,
 # then http://localhost:8090.
 #
-# Postgres, the Go API and the SvelteKit server, all built from this checkout.
+# Postgres, the Go API, its sync of the ONS's data and the SvelteKit server,
+# all built from this checkout.
 # The password below is fine on a laptop and nowhere else; a `.env` file next
 # to this one overrides it.
 name: spillway
@@ -55,6 +56,23 @@ services:
     # The image's healthcheck asks the admin port's /readyz. Neither port is
     # published: 8080 serves the web server alone, and 9090 (/livez, /readyz,
     # /metrics) whoever is on the stack's network.
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # Loads the ONS's files, the latest month first, then checks for new and
+  # revised ones every hour. The first load takes a few minutes; until the
+  # latest month is in, the pages say the data is on its way. It is the only
+  # service that reaches the internet.
+  sync:
+    image: spillway-api:local
+    pull_policy: never
+    command: ['sync']
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: *database-url
+      LOG_FORMAT: json
+      SYNC_INTERVAL: 1h
     depends_on:
       migrate:
         condition: service_completed_successfully
