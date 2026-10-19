@@ -85,7 +85,11 @@
 />
 
 <div class="mx-auto flex max-w-[83.25rem] flex-col gap-600 px-600 py-700">
-  <div class="grid gap-600 laptop:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] laptop:items-start">
+  <!--
+    Side by side, the two cards are as tall as each other: the preview's chart
+    grows to where the form ends, whatever the form shows.
+  -->
+  <div class="grid gap-600 laptop:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
     <Card
       title="What to Watch"
       description="Choose a source and a subsystem, and how much curtailed energy in one day is too much."

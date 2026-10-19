@@ -54,7 +54,7 @@
       rows: [{ label: s.label, value: `${int(days[i] ?? 0)} MWh`, fill: s.fill }],
     })}
     fallbackWidth={718}
-    class="h-[16.25rem]"
+    class="min-h-[16.25rem] flex-1"
   />
   <p class="ts-primary-body-l text-text-primary-default" aria-live="polite">
     {#if threshold === undefined}
