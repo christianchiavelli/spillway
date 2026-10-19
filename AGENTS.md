@@ -10,17 +10,17 @@ Alerts on how much wind and solar energy Brazil's grid operator keeps from being
 | `services/api` | The Go API: `domain`, `app`, `adapter` and `platform` under `internal`, wired by hand in `cmd/api` (ADR 0003) |
 | `apps/web` | The SvelteKit app: every page rendered on its server, the only thing a browser talks to (ADR 0001) |
 | `e2e` | Playwright against the running stack: desktop, a phone, and JavaScript off |
-| `docs` | `architecture.md` and the decision records in `adr/` |
+| `docs` | `architecture.md`, the decision records in `adr/`, and the logo in `brand/`, with the script that draws it |
 
 ## Commands
 
-- `docker compose up --wait --build`: the whole stack, healthchecked, at `http://localhost:8090`. Use `localhost`, not `127.0.0.1`: the app's origin is fixed at build time and a form posted from another one is refused (ADR 0015).
+- `docker compose up --wait --build`: the whole stack, healthchecked, at `http://localhost:8090`. Use `localhost`, not `127.0.0.1`: the app's origin is fixed at build time and a form posted from another one is refused (ADR 0015). The first start downloads the ONS's files, about 280 MB, in a minute or so; until the latest month is in, the data pages say so.
 - `pnpm install`: Node 24.22.0 and pnpm 12.14.0 are pinned (`devEngines`, `packageManager`) and downloaded on the first install.
 - `pnpm run ci`: format check, lint, types, unit and component tests in every package. Must pass before any change is done.
 - `pnpm exec prettier --write <paths>`: from the repository root, which holds the ignore file.
 - `pnpm --filter @spillway/web dev`: the web app on port 5173, against the API at `API_URL` (from `.env` in `apps/web`, e.g. `API_URL=http://localhost:8080`).
 - `pnpm --filter @spillway/web api:generate`: after any change to the contract. Commit what it writes under `src/lib/api/generated`; `pnpm run contract:check` fails while it is stale.
-- `pnpm run e2e`: the browser checks, against the stack compose started. The first time, `pnpm --filter @spillway/e2e exec playwright install chromium` fetches the browser.
+- `pnpm run e2e`: the browser checks, against the stack compose started, once the sync has loaded every month. The first time, `pnpm --filter @spillway/e2e exec playwright install chromium` fetches the browser.
 - `pnpm run screenshots`: takes the README's screens again from the running stack, into `docs/screenshots`. Look at each before committing it.
 
 In `services/api`:
@@ -29,7 +29,7 @@ In `services/api`:
 - `go test -race ./...`: the unit tests.
 - `go test -race -tags integration ./internal/adapter/postgres/...`: against a real Postgres 18, in Testcontainers (Docker must be running), or the empty database `TEST_DATABASE_URL` names.
 - `go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0 run ./...`: the linters, the layer rules included.
-- `go run ./cmd/api serve` and `go run ./cmd/api migrate`: with `DATABASE_URL` set. `LOG_FORMAT=text` reads better on a laptop.
+- `go run ./cmd/api serve`, `go run ./cmd/api sync` and `go run ./cmd/api migrate`: with `DATABASE_URL` set. `LOG_FORMAT=text` reads better on a laptop, and `SYNC_INTERVAL=0` makes `sync` run once and exit.
 
 ## The API's configuration
 
@@ -45,6 +45,8 @@ In `services/api`:
 | `SHUTDOWN_DRAIN`, `SHUTDOWN_TIMEOUT` | `0s`, `20s` | ADR 0012 |
 | `PASSWORD_HASH_CONCURRENCY` | the CPUs | Hashes at once |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | Traces over OTLP when set (ADR 0011) |
+| `ONS_URL` | the ONS's bucket | Where `sync` lists and reads the files (ADR 0020) |
+| `SYNC_INTERVAL` | `1h` | How often `sync` looks for new and revised files; `0` runs it once |
 
 The configuration is read once, at start, and every bad value is reported together.
 

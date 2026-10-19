@@ -6,13 +6,18 @@ How Spillway is put together, and the path one request takes through it. Why eac
 
 ```text
 browser ──HTML forms──▶ web (SvelteKit 3, Node 24) ──JSON over HTTP──▶ api (Go 1.27) ──pgx──▶ Postgres 18
-          one origin,      renders every page,          bearer token,        rules, sessions,
-          one cookie       keeps the session cookie     private network      storage
+          one origin,      renders every page,          bearer token,        rules, sessions,      ▲
+          one cookie       keeps the session cookie     private network      storage              │ pgx
+                                                                                                   │
+the ONS's S3 bucket ◀──HTTPS, ETags── sync (`api sync`, the same binary) ─────────────────────────┘
+   a Parquet file per                  sums each new or revised file,
+   source and month                    and replaces its month whole
 ```
 
 - The browser only ever talks to the web server, on one origin (ADR 0001).
 - The web server only ever talks to the API, with the session's token as a bearer token. Nothing publishes the API's port.
 - The API only ever talks to Postgres.
+- The sync service is the only one that reaches the internet, to read the ONS's files every hour (ADR 0020).
 - `contracts/openapi.yaml` describes the one interface between the two servers, and both sides are generated from it (ADR 0002).
 
 ## The repository
@@ -22,18 +27,22 @@ spillway/
 ├── contracts/
 │   └── openapi.yaml            the API: every request, answer, limit and error code
 ├── services/api/               Go module: the API
-│   ├── cmd/api/                main: `serve`, `migrate`, `healthcheck`; wires everything by hand
+│   ├── cmd/api/                main: `serve`, `sync`, `migrate`, `healthcheck`; wires everything by hand
 │   ├── internal/
 │   │   ├── domain/             entities and rules, no I/O
 │   │   │   ├── errors.go       sentinels, ValidationError, ConflictError, violation codes
 │   │   │   ├── account/        email and password rules, sessions and their tokens
-│   │   │   └── alert/          what makes an alert, and the limit per account
+│   │   │   ├── alert/          what makes an alert, the limit per account, firings
+│   │   │   └── curtailment/    sources, subsystems, reasons, periods, a month's sums
 │   │   ├── app/                use cases, each with the interfaces it needs
-│   │   │   ├── alerting/       create, list and delete alerts
-│   │   │   └── identity/       sign up, sign in, authenticate, sign out, purge
+│   │   │   ├── alerting/       create, list and delete alerts, and read their firings
+│   │   │   ├── identity/       sign up, sign in, authenticate, sign out, purge
+│   │   │   ├── ingest/         load the ONS's new and revised files, the latest month first
+│   │   │   └── reports/        a period's overview, the plants ranked, the months, the latest days
 │   │   ├── adapter/            the outside world, behind the use cases' interfaces
 │   │   │   ├── httpapi/        the server ogen generated (oas/), handlers, problems, middleware
 │   │   │   ├── postgres/       migrations/, queries/, sqlc's sqlcdb/, and the stores
+│   │   │   ├── ons/            the ONS's bucket: its listing, and its Parquet files
 │   │   │   ├── argon2id/       password hashing, a bounded number at a time
 │   │   │   └── ratelimit/      the sign-in throttle, a token bucket per address
 │   │   └── platform/           config, logging, httpserver, health, telemetry, schedule
@@ -45,18 +54,18 @@ spillway/
 │   │   ├── hooks.server.ts     request id, security headers, the session on every request
 │   │   ├── env.ts              API_URL, checked when the server starts
 │   │   ├── app.css             the design system's tokens and type styles
-│   │   ├── routes/             sign-in, sign-up, sign-out, alerts, the error page
+│   │   ├── routes/             the overview (/), plants, history, alerts and a new one, signing in and out
 │   │   └── lib/
 │   │       ├── api/generated/  Hey API's types, client and Zod schemas: not edited by hand
 │   │       ├── server/         server only: the API client, session and flash cookies, form readers
 │   │       ├── forms/          what every form does: field errors, and use:enhance's additions
-│   │       ├── features/       the domain's words for the screen: alerts, account
-│   │       └── components/     ui/ (fields, buttons, table pieces, toasts) and layout/ (the shell)
+│   │       ├── features/       the domain's words for the screen: curtailment, alerts, account
+│   │       └── components/     ui/ (fields, buttons, tables, toasts), charts/ (SVG) and layout/
 │   ├── vite.config.ts          SvelteKit's options (CSP, CSRF, origin) and the Vitest projects
 │   └── Dockerfile              adapter-node's output on Node
 ├── e2e/                        Playwright against the running stack: desktop, phone, no JavaScript
 ├── docs/                       this file, and the decision records in adr/
-├── compose.yaml                db, migrate, api and web
+├── compose.yaml                db, migrate, api, sync and web
 └── .github/workflows/ci.yml
 ```
 
@@ -103,6 +112,22 @@ Someone fills in the form on `/alerts` and presses Create Alert.
 
 The other operations take the same path: the contract, the generated decoder, a handler, a use case, the domain, an adapter.
 
+## The data, from the ONS to a page
+
+| Step | Where | What happens |
+| --- | --- | --- |
+| 1 | `cmd/api`, `sync` | Each hour, and once at start, the ingest use case runs. |
+| 2 | `adapter/ons` | Lists both datasets in the ONS's S3 bucket, one request each, and keeps the monthly Parquet files with their ETags. |
+| 3 | `app/ingest` | Skips every file whose ETag is the one stored, and takes the rest the latest month first. |
+| 4 | `adapter/ons`, `domain/curtailment` | Downloads a file and reads it with parquet-go into a month builder, which checks each record and sums it into plant days, subsystem days, reason days and half hours. |
+| 5 | `adapter/postgres` | One transaction: the plants upserted, the month's rows deleted, the sums copied in, the file's ETag recorded. A file that fails is logged and left for the next run. |
+| 6 | `routes/+page.server.ts` | `/?period=week&date=2026-10-14` asks `GET /v1/curtailment` and `GET /v1/plants`, public operations that need no session. |
+| 7 | `app/reports`, `domain/curtailment` | Works out the period from how far the data goes: the week from Monday that holds the day, up to the last day published, and as many days of the week before to compare with. |
+| 8 | `adapter/postgres` | Reads the totals, the series, the subsystems, the reasons and the plant counts in one repeatable-read snapshot. |
+| 9 | `features/curtailment`, `components/charts` | Words the period, and draws its columns and bars in SVG on the server, with the figures in a table under each chart (ADR 0022). |
+
+An alert's firings are a query over the same subsystem days, not rows of their own (ADR 0021).
+
 ## Conventions
 
 **Go**
@@ -110,7 +135,7 @@ The other operations take the same path: the contract, the generated decoder, a 
 - Errors are values: sentinels and typed errors in the domain, wrapped with `%w` on the way up, told apart with `errors.Is` and `errors.As`, mapped to a status in one place (`httpapi.NewError`). No panics for control flow.
 - Every function that does I/O takes a `context.Context` first, and passes it down. Background work gets its own context from `main`, never `context.Background()` in the middle of a call.
 - Interfaces are declared by the package that uses them, with only the methods it calls. Constructors return concrete types.
-- Goroutines only where something runs on its own: the two servers, the session purge and the throttle's sweep, in one errgroup. The password hasher bounds its own concurrency with a channel used as a semaphore.
+- Goroutines only where something runs on its own: the two servers, the session purge and the throttle's sweep, in one errgroup; in `sync`, the admin server and the hourly run, in another. The password hasher bounds its own concurrency with a channel used as a semaphore.
 - `log/slog` only, with the request's attributes taken from the context.
 - Tests sit next to the code as `_test.go`. Integration tests carry the `integration` build tag and need a Postgres.
 

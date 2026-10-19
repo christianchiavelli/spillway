@@ -22,3 +22,7 @@ One file per decision that had a trade-off, version pins included. Each says wha
 | [0016](0016-local-only.md) | Local only |
 | [0017](0017-ci-least-privilege-pinned-actions.md) | CI with least privilege and pinned actions |
 | [0018](0018-toolchains-and-images-pinned.md) | Toolchains, dependencies and images pinned |
+| [0019](0019-material-symbols-and-a-wordmark-drawn-from-the-data.md) | Material Symbols, and a wordmark drawn from the data |
+| [0020](0020-the-ons-data-is-synced-by-a-process-of-its-own.md) | The ONS's data is synced by a process of its own |
+| [0021](0021-firings-are-read-from-the-data.md) | Firings are read from the data, not recorded |
+| [0022](0022-charts-drawn-in-our-own-svg.md) | Charts drawn in our own SVG |
