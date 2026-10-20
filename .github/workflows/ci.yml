@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   workflows:
-    name: 'Workflows: lint and security audit'
+    name: Workflow audit
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -32,18 +32,18 @@ jobs:
           cache-dependency-path: services/api/go.sum
 
       # Expressions, job graphs and every run script, through the runner's shellcheck.
-      - name: actionlint
+      - name: Lint workflows
         run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
 
       # Injection, excessive permissions, persisted credentials, and actions
       # pinned to a commit their repository does not have, which takes the token.
-      - name: zizmor
+      - name: Audit workflows
         env:
           GH_TOKEN: ${{ github.token }}
         run: pipx run zizmor==1.31.1 --format github .github/workflows
 
   api:
-    name: 'API: generated code, lint, tests and known vulnerabilities'
+    name: API
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
@@ -59,27 +59,28 @@ jobs:
           go-version-file: services/api/go.mod
           cache-dependency-path: services/api/go.sum
 
-      - name: Modules tidy and verified
+      - name: Verify modules
         run: go mod tidy -diff && go mod verify
 
       # ogen from the contract, sqlc from the queries: what is committed must be
       # what the generators write today.
-      - name: Generated code matches its sources
+      - name: Verify codegen
         run: go generate ./... && git diff --exit-code -- . && test -z "$(git status --porcelain -- .)"
 
-      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+      - name: Lint
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
           version: v2.15.0
           working-directory: services/api
 
-      - name: Unit tests, with the race detector
+      - name: Test
         run: go test -race ./...
 
-      - name: Known vulnerabilities in the code that is called
+      - name: Scan for vulnerabilities
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
   api-integration:
-    name: 'API: integration tests against Postgres 18'
+    name: API integration
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
@@ -96,11 +97,11 @@ jobs:
           cache-dependency-path: services/api/go.sum
 
       # Testcontainers starts postgres:18.6 on the runner's Docker.
-      - name: Integration tests
+      - name: Test
         run: go test -race -tags integration ./internal/adapter/postgres/...
 
   web:
-    name: 'Web: format, lint, types, unit and component tests, build'
+    name: Web
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -117,21 +118,21 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      - name: Install
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       # The component tests run in Chromium, through Vitest's browser mode.
-      - name: Browser for the component tests
+      - name: Install Playwright
         run: pnpm --filter @spillway/web exec playwright install --with-deps chromium
 
-      - name: Checks and tests
+      - name: Check and test
         run: pnpm run ci
 
       - name: Build
         run: pnpm --filter @spillway/web build
 
   contract:
-    name: 'Contract: clients in step, no breaking change'
+    name: Contract
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -153,16 +154,16 @@ jobs:
           go-version-file: services/api/go.mod
           cache-dependency-path: services/api/go.sum
 
-      - name: Install
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       # The Go server is checked in the api job; this is the TypeScript client.
-      - name: The web's client and schemas match the contract
+      - name: Check client
         run: pnpm run contract:check
 
       # Changes go straight to main, so a push is compared with the commit
       # before it, and a pull request with its base.
-      - name: No breaking change against the previous contract
+      - name: Check for breaking changes
         env:
           BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
         run: |
@@ -174,7 +175,7 @@ jobs:
           fi
 
   e2e:
-    name: 'End to end: the stack from compose, in a browser'
+    name: E2E
     needs: [api, web]
     runs-on: ubuntu-24.04
     timeout-minutes: 25
@@ -190,23 +191,23 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      - name: Install
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Browser
+      - name: Install Playwright
         run: pnpm --filter @spillway/e2e exec playwright install --with-deps chromium
 
-      - name: Start the stack
+      - name: Start stack
         run: docker compose up --wait --build
 
-      - name: Browser checks
+      - name: Test
         run: pnpm run e2e
 
-      - name: Logs of the stack
+      - name: Print stack logs
         if: ${{ failure() }}
         run: docker compose logs --no-color
 
-      - name: Upload the report
+      - name: Upload report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -216,12 +217,12 @@ jobs:
             e2e/test-results/
           retention-days: 7
 
-      - name: Stop the stack
+      - name: Stop stack
         if: ${{ always() }}
         run: docker compose down --volumes
 
   vitals:
-    name: 'Web Vitals: each page on a slow phone, against its baseline'
+    name: Web Vitals
     needs: [api, web]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -237,28 +238,28 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      - name: Install
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       # Chrome itself, not the headless shell: it paints the way Chrome does.
-      - name: Browser
+      - name: Install Playwright
         run: pnpm --filter @spillway/e2e exec playwright install --with-deps chromium
 
       # The sync stays off: the sums of the ONS's files as they were synced
       # once are restored in its place, so every run measures the same data.
-      - name: Start the stack, on the recorded sums
+      - name: Start stack with recorded data
         run: pnpm run vitals:stack
 
       # Fails when a page measures worse than its baseline; the table lands in the run's summary.
       - name: Measure
         run: pnpm run vitals
 
-      - name: Logs of the stack
+      - name: Print stack logs
         if: ${{ failure() }}
         run: docker compose --file compose.yaml --file e2e/vitals/compose.yaml logs --no-color
 
       # What `pnpm run vitals:accept` takes as the next baseline.
-      - name: Upload the measurement
+      - name: Upload measurement
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -266,6 +267,6 @@ jobs:
           path: e2e/vitals-report/
           retention-days: 90
 
-      - name: Stop the stack
+      - name: Stop stack
         if: ${{ always() }}
         run: docker compose --file compose.yaml --file e2e/vitals/compose.yaml down --volumes
