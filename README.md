@@ -161,8 +161,14 @@ Every push also measures LCP, CLS and INP on the phone and connection Lighthouse
 
 <!-- web-vitals -->
 
-No baseline yet: the first is accepted from CI's runs.
+| Page         | LCP    | CLS   | INP   |
+| ------------ | ------ | ----- | ----- |
+| The overview | 1.87 s | 0.018 | 64 ms |
+| The plants   | 1.66 s | 0.083 | 32 ms |
+| The history  | 1.76 s | 0.000 | 64 ms |
+| A new alert  | 1.43 s | 0.001 | 32 ms |
 
+Measured on October 20, 2026, the median of two runs in CI ([1](https://github.com/christianchiavelli/spillway/actions/runs/39364887000), [2](https://github.com/christianchiavelli/spillway/actions/runs/39365818218)).
 <!-- /web-vitals -->
 
 ---

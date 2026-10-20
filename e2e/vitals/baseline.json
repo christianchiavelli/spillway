@@ -1,3 +1,37 @@
 {
-  "pages": {}
+  "measured": "2026-10-20",
+  "runs": [
+    "https://github.com/christianchiavelli/spillway/actions/runs/39364887000",
+    "https://github.com/christianchiavelli/spillway/actions/runs/39365818218"
+  ],
+  "pages": {
+    "overview": {
+      "name": "The overview",
+      "path": "/",
+      "LCP": 1866,
+      "CLS": 0.0177,
+      "INP": 64
+    },
+    "plants": {
+      "name": "The plants",
+      "path": "/plants",
+      "LCP": 1660,
+      "CLS": 0.0829,
+      "INP": 32
+    },
+    "history": {
+      "name": "The history",
+      "path": "/history",
+      "LCP": 1758,
+      "CLS": 0.0001,
+      "INP": 64
+    },
+    "new-alert": {
+      "name": "A new alert",
+      "path": "/alerts/new",
+      "LCP": 1428,
+      "CLS": 0.0012,
+      "INP": 32
+    }
+  }
 }
