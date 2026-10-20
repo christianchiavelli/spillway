@@ -3,7 +3,7 @@ import * as z from 'zod';
 
 import { zNewAccount, zNewAlert } from '#lib/api/generated/zod.gen.ts';
 
-import { firstInvalid, fromIssues, fromProblem } from './errors.ts';
+import { firstInvalid, fromIssues, fromProblem, fromValidity } from './errors.ts';
 
 const alertFields = ['name', 'source', 'subsystem', 'thresholdMwh'] as const;
 
@@ -106,5 +106,24 @@ describe('firstInvalid', () => {
     );
     expect(firstInvalid({}, alertFields)).toBeUndefined();
     expect(firstInvalid(undefined, alertFields)).toBeUndefined();
+  });
+});
+
+describe('fromValidity', () => {
+  // Only what the check reads: a browser's ValidityState has every flag false
+  // but the broken one, and valid true when none is set.
+  const validity = (broken?: keyof ValidityState) =>
+    ({ valid: broken === undefined, ...(broken && { [broken]: true }) }) as ValidityState;
+
+  it('names the browser’s verdict with the code the server would send', () => {
+    expect(fromValidity(validity('valueMissing'))).toBe('required');
+    expect(fromValidity(validity('typeMismatch'))).toBe('invalid');
+    expect(fromValidity(validity('tooShort'))).toBe('too_short');
+    expect(fromValidity(validity('tooLong'))).toBe('too_long');
+    expect(fromValidity(validity('rangeOverflow'))).toBe('out_of_range');
+  });
+
+  it('finds nothing wrong with a valid field', () => {
+    expect(fromValidity(validity())).toBeUndefined();
   });
 });

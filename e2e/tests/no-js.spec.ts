@@ -5,6 +5,15 @@ import { expect, newEmail, password, test } from './fixtures.ts';
 test('without JavaScript, an account and an alert are made the old way', async ({ page }) => {
   await page.goto('/sign-up');
   await page.getByLabel('Email address').fill(newEmail());
+  await page.getByLabel('Password').fill('too short');
+  await page.getByRole('button', { name: 'Create Account' }).click();
+  // The refused page opens on the field to put right, as the script would.
+  await expect(page.getByLabel('Password')).toBeFocused();
+  await expect(page.getByLabel('Password')).toHaveAccessibleDescription(
+    'Use at least 15 characters',
+  );
+  await expect(page.getByRole('button', { name: 'Show password' })).toHaveCount(0);
+
   await page.getByLabel('Password').fill(password);
   await page.getByRole('button', { name: 'Create Account' }).click();
   await expect(page).toHaveURL(/\/alerts$/);

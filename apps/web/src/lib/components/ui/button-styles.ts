@@ -11,7 +11,7 @@ import { tv, type VariantProps } from 'tailwind-variants/lite';
 export const buttonStyles = tv({
   base: [
     'inline-flex shrink-0 cursor-pointer items-center justify-center gap-300 rounded-200 px-400 py-300 whitespace-nowrap',
-    'transition-[background-color,box-shadow,color] duration-300 ease-out focus-visible:shadow-focus-lift',
+    'transition-[background-color,box-shadow,color] duration-300 ease-out focus-visible:shadow-focus-lift aria-disabled:cursor-progress',
     'disabled:cursor-not-allowed disabled:bg-surface-container-primary disabled:text-text-primary-disabled disabled:ring-1 disabled:ring-stroke-neutral-default disabled:ring-inset',
   ],
   variants: {
@@ -27,6 +27,8 @@ export const buttonStyles = tv({
     size: {
       lg: 'min-h-[2.25rem] ts-primary-button-l',
       sm: 'min-h-[2rem] ts-primary-button-s',
+      /** A form's one action: its full width, and as tall as its fields. */
+      block: 'min-h-[2.625rem] w-full ts-primary-button-l',
     },
   },
   defaultVariants: { variant: 'primary', size: 'lg' },

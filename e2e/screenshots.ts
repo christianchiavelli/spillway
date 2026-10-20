@@ -228,7 +228,7 @@ const screens: Record<string, (browser: Browser) => Promise<Page>> = {
     await page.getByLabel('Email address').fill(ANA.email);
     await page.getByLabel('Password').fill('not the password at all');
     await page.getByRole('button', { name: 'Sign In' }).click();
-    await expect(page.getByRole('alert')).toContainText('The email or the password is wrong');
+    await expect(page.getByRole('alert')).toContainText('Wrong email address or password');
     return page;
   },
 };

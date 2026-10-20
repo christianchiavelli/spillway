@@ -120,12 +120,7 @@
           <a href={localized(resolve('/alerts'))} class={buttonStyles({ variant: 'secondary' })}
             >{m.new_alert_cancel()}</a
           >
-          <Button
-            type="submit"
-            icon={NotificationAdd}
-            disabled={full}
-            aria-disabled={creating || undefined}
-          >
+          <Button type="submit" icon={NotificationAdd} disabled={full} pending={creating}>
             {creating ? m.new_alert_creating() : m.new_alert_create()}
           </Button>
         </div>

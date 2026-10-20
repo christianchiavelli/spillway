@@ -31,9 +31,9 @@ export function enhanceForm({ onpending, resetOnRedirect = false }: Options = {}
         await update({ reset: false });
         if (result.type === 'failure') {
           // Without JavaScript the page never sends a password back, so a
-          // refused form comes back without one. The same here.
+          // refused form comes back without one. The same here, shown or not.
           for (const input of formElement.querySelectorAll<HTMLInputElement>(
-            'input[type="password"]',
+            'input[type="password"], input[data-password]',
           )) {
             input.value = '';
           }

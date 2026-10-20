@@ -38,3 +38,17 @@ export function accountError(
   if (code === undefined) return undefined;
   return (messages[field][code] ?? m.form_check_field)();
 }
+
+type Input = Event & { currentTarget: EventTarget & HTMLInputElement };
+
+/** What AccountForm hands each of its fields, spread onto the field. */
+export type AccountFieldProps = {
+  name: AccountField;
+  error: string | undefined;
+  autofocus: boolean;
+  onblur: (event: Input) => void;
+  oninput: (event: Input) => void;
+};
+
+/** The props of each field of AccountForm, by name. */
+export type FieldFor = (name: AccountField) => AccountFieldProps;

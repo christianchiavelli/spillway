@@ -77,6 +77,19 @@ export function fromProblem<Field extends string>(
   return errors;
 }
 
+/**
+ * Names the rule a field breaks by the browser's own check of its attributes,
+ * `required`, `type`, `minlength` and the rest, which the form sets from the
+ * contract: the same rules the server applies, read before anything is sent.
+ */
+export function fromValidity(validity: ValidityState): FieldErrorCode | undefined {
+  if (validity.valueMissing) return 'required';
+  if (validity.tooShort) return 'too_short';
+  if (validity.tooLong) return 'too_long';
+  if (validity.rangeUnderflow || validity.rangeOverflow) return 'out_of_range';
+  return validity.valid ? undefined : 'invalid';
+}
+
 /** The first field with an error, in the order the form shows them. */
 export function firstInvalid<Field extends string>(
   errors: FieldErrors<Field> | undefined,

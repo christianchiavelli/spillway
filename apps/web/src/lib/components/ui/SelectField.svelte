@@ -1,5 +1,7 @@
 <script lang="ts">
   import ArrowDown from '~icons/material-symbols/keyboard-arrow-down-rounded';
+
+  import FieldMessage from './FieldMessage.svelte';
   import type { HTMLSelectAttributes } from 'svelte/elements';
 
   type Option = { value: string; label: string };
@@ -30,7 +32,7 @@
   }: Props = $props();
 
   const messageId = $derived(`${id}-message`);
-  const message = $derived(error ?? hint);
+  const described = $derived(error !== undefined || hint !== undefined);
 </script>
 
 <!--
@@ -49,7 +51,7 @@
     <label
       for={id}
       class={[
-        'absolute -top-300 left-300 bg-surface-container-primary px-100 ts-primary-subheading-xs',
+        'absolute -top-300 left-200 bg-surface-container-primary px-200 ts-primary-subheading-xs',
         error ? 'text-text-semantic-error' : 'text-text-secondary-default',
       ]}
     >
@@ -60,7 +62,7 @@
       {name}
       {required}
       aria-invalid={error === undefined ? undefined : true}
-      aria-describedby={message === undefined ? undefined : messageId}
+      aria-describedby={described ? messageId : undefined}
       class="select-menu h-full w-full min-w-0 cursor-pointer rounded-200 bg-transparent pr-800 pl-300 ts-primary-body-l text-text-primary-default outline-none"
       {...rest}
     >
@@ -75,15 +77,5 @@
       class="pointer-events-none absolute right-300 text-icon-secondary"
     />
   </div>
-  {#if message !== undefined}
-    <p
-      id={messageId}
-      class={[
-        'pl-200 ts-primary-subheading-xs',
-        error === undefined ? 'text-text-secondary-default' : 'text-text-semantic-error',
-      ]}
-    >
-      {message}
-    </p>
-  {/if}
+  <FieldMessage id={messageId} {hint} {error} />
 </div>

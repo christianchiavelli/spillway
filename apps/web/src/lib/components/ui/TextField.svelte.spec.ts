@@ -46,8 +46,9 @@ describe('TextField', () => {
       required: true,
     });
 
-    await expect
-      .element(page.getByRole('textbox', { name: 'Email address', exact: true }))
-      .toBeInTheDocument();
+    const input = page.getByRole('textbox', { name: 'Email address', exact: true });
+    await expect.element(input).toBeInTheDocument();
+    // With neither a hint nor an error, it describes nothing, not an empty line.
+    await expect.element(input).not.toHaveAttribute('aria-describedby');
   });
 });
