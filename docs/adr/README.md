@@ -30,3 +30,4 @@ One file per decision that had a trade-off, version pins included. Each says wha
 | [0024](0024-a-map-of-the-subsystems-beside-their-ranking.md) | A map of the subsystems, beside their ranking |
 | [0025](0025-a-chart-or-its-table-by-a-switch.md) | A chart or its table, by a switch |
 | [0026](0026-a-portuguese-edition-under-pt-br.md) | A Portuguese edition, under /pt-br |
+| [0027](0027-sign-in-and-sign-up-check-each-field-as-it-is-left.md) | Sign-in and sign-up check each field as it is left |

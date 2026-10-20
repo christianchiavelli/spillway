@@ -63,7 +63,7 @@ SvelteKit 3 and Svelte 5 in front, a Go 1.27 API behind it, Postgres 18 behind t
 
 **A sign-in refused**
 
-![The sign-in page saying the email or the password is wrong, the address kept and the password cleared](docs/screenshots/sign-in-refused.png)
+![The sign-in card saying the email address or password is wrong, inside the card above the fields, the address kept, the password cleared beside its show button, and the way to create an account centred under the card](docs/screenshots/sign-in-refused.png)
 
 Regenerate with `pnpm run screenshots`, against the stack `docker compose up --wait --build` started, or with `pnpm run screenshots <name>` for one screen. They show the latest day the ONS has published, and the alerts are taken as an account of the script's own, `ana@example.com`, whose alerts it replaces each time.
 
@@ -128,6 +128,7 @@ The ONS publishes it on its open data portal under CC-BY, plant by plant in half
 - **Sessions no script can read.** An opaque token, stored only as its SHA-256, in an `HttpOnly`, `SameSite=Lax` cookie; argon2id for passwords, a throttle per address on sign-in, and the same answer and the same delay for an unknown address and a wrong password ([ADR 0006](docs/adr/0006-sessions-cookies-csrf-and-cors.md), [ADR 0007](docs/adr/0007-the-sign-in-throttle-lives-in-memory.md)).
 - **Twenty alerts means twenty.** Creating one locks the account's row, counts and inserts in one transaction, and a test fires forty creates at once at a real Postgres to prove only twenty land ([ADR 0008](docs/adr/0008-the-alert-limit-is-held-by-the-database.md)).
 - **Every form works without JavaScript.** Each is a plain form with a server action, enhanced when the script runs; a refused form comes back with what was typed, and an accepted one redirects, so a reload never posts it twice ([ADR 0010](docs/adr/0010-every-form-works-without-javascript.md)).
+- **Account forms that check as you go.** Sign-in and sign-up share one form: the browser checks a field when it is left, with the rules the contract already put on it, and a form it can tell is wrong is not sent; focus goes to the first field to fix, and a password can be shown ([ADR 0027](docs/adr/0027-sign-in-and-sign-up-check-each-field-as-it-is-left.md)).
 - **A dense look, accessible first.** Dark chrome, white panels, compact controls and tables, from tokens in Tailwind 4; every label visible, native selects and radios, one focus ring, an error summary that takes focus ([ADR 0009](docs/adr/0009-a-dense-dashboard-look-accessibility-first.md)), and toasts that leave on their own but never while pointed at or focused ([ADR 0023](docs/adr/0023-toasts-under-the-page-header-leave-on-their-own.md)).
 - **The ONS's files, synced on their own.** A second process from the same binary lists the ONS's bucket every hour, loads each new or revised month by its ETag, the latest first, and replaces it whole in one transaction. The pages read the sums it keeps, never the files ([ADR 0020](docs/adr/0020-the-ons-data-is-synced-by-a-process-of-its-own.md)).
 - **Firings read from the data.** An alert's firings are a query over the daily sums, not rows of their own, so a revised day revises them too ([ADR 0021](docs/adr/0021-firings-are-read-from-the-data.md)).
