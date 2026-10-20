@@ -6,18 +6,18 @@ Spillway reads the ONS's files every hour and shows what was curtailed: a day, a
 
 SvelteKit 3 and Svelte 5 in front, a Go 1.27 API behind it, Postgres 18 behind that, and an OpenAPI 3.1 contract between the two servers that both are generated from.
 
-![The overview of Sunday, October 18, 2026: 152 GWh curtailed, 44% of what the plants could have generated, 64.5 GWh of wind and 87.4 GWh of solar, and a column per half hour, wind and solar stacked, peaking at 11,153 MWh at 10:00, with a switch to see it as a table](docs/screenshots/overview.png)
+![The overview of Sunday, October 18, 2026: 152 GWh curtailed, 44% of what the plants could have generated, 64.7 GWh of wind and 87.4 GWh of solar, and a column per half hour, wind and solar stacked, peaking at 11,160 MWh at 10:00, with a switch to see it as a table](docs/screenshots/overview.png)
 
 <details>
 <summary>More screens</summary>
 
 **A half hour, pointed at**
 
-![The same day's chart with a tooltip on 12:30 to 13:00: 3,517 MWh of wind, 6,177 MWh of solar, 9,694 MWh in all](docs/screenshots/overview-tooltip.png)
+![The same day's chart with a tooltip on 12:30 to 13:00: 3,518 MWh of wind, 6,177 MWh of solar, 9,696 MWh in all](docs/screenshots/overview-tooltip.png)
 
 **A month so far**
 
-![October 2026 up to the 18th: 2,514 GWh curtailed, 17% less than September 1 to 18, a column per day, and the days to come marked as not published yet](docs/screenshots/overview-month.png)
+![October 2026 up to the 18th: 2,524 GWh curtailed, 17% less than September 1 to 18, a column per day, and the days to come marked as not published yet](docs/screenshots/overview-month.png)
 
 **Where, and why**
 
@@ -37,7 +37,7 @@ SvelteKit 3 and Svelte 5 in front, a Go 1.27 API behind it, Postgres 18 behind t
 
 **A new alert, against the last 30 days**
 
-![The new alert form for Northeast wind at 150,000 MWh, beside a column per day of the last 30 with a dashed line at the threshold, the days over it in blue, and a line saying it would have fired on 6 of them](docs/screenshots/alert-preview.png)
+![The new alert form for Northeast wind at 150,000 MWh, beside a column per day of the last 30 with a dashed line at the threshold, the days over it in blue, and a line saying it would have fired on 5 of them](docs/screenshots/alert-preview.png)
 
 **A form refused, with or without JavaScript**
 
@@ -59,7 +59,7 @@ SvelteKit 3 and Svelte 5 in front, a Go 1.27 API behind it, Postgres 18 behind t
 
 **In Portuguese**
 
-![The overview in Portuguese, under /pt-br: Domingo, 18 de outubro de 2026, 152 GWh curtailed, 64,5 GWh of wind and 87,4 GWh of solar with a decimal comma, the navigation as Visão geral, Usinas, Histórico and Alertas, and EN | PT in the header with PT underlined](docs/screenshots/overview-pt.png)
+![The overview in Portuguese, under /pt-br: Domingo, 18 de outubro de 2026, 152 GWh curtailed, 64,7 GWh of wind and 87,4 GWh of solar with a decimal comma, the navigation as Visão geral, Usinas, Histórico and Alertas, and EN | PT in the header with PT underlined](docs/screenshots/overview-pt.png)
 
 **A sign-in refused**
 
