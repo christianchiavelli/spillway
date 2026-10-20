@@ -27,6 +27,8 @@ catalog:
   playwright: 1.64.1
   '@playwright/test': 1.64.1
   '@axe-core/playwright': 4.14.0
+  # The Core Web Vitals, measured in the page by the end-to-end package.
+  web-vitals: 6.2.3
 
   # Web app
   svelte: 5.57.2

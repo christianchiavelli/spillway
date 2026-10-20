@@ -300,6 +300,9 @@ catalogs:
     vitest-browser-svelte:
       specifier: 3.1.0
       version: 3.1.0
+    web-vitals:
+      specifier: 6.2.3
+      version: 6.2.3
     zod:
       specifier: 4.6.7
       version: 4.6.7
@@ -446,12 +449,18 @@ importers:
       eslint-config-prettier:
         specifier: 'catalog:'
         version: 10.1.8(eslint@10.13.0(jiti@2.7.0))
+      prettier:
+        specifier: 'catalog:'
+        version: 3.9.10
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
       typescript-eslint:
         specifier: 'catalog:'
         version: 8.71.2(eslint@10.13.0(jiti@2.7.0))(typescript@6.0.3)
+      web-vitals:
+        specifier: 'catalog:'
+        version: 6.2.3
 
 packages:
 
@@ -2546,6 +2555,9 @@ packages:
       jsdom:
         optional: true
 
+  web-vitals@6.2.3:
+    resolution: {integrity: sha512-Dmy+vdO1UPMqXiAtZSNayhl4f794Bxfd94W4HIj2HlYtczEQfEOon969memlcpcHrTuOKLa5baFjX7WbgmOq+A==}
+
   webpack-virtual-modules@0.6.2:
     resolution: {integrity: sha512-66/V2i5hQanC51vBQKPH4aI8NMAcBW59FVBs+rC7eGHupMyfn34q7rZIE+ETlJ+XTevqfUhVVBgSUNSW2flEUQ==}
 
@@ -4246,6 +4258,8 @@ snapshots:
       '@vitest/ui': 5.0.5(vitest@5.0.5)
     transitivePeerDependencies:
       - msw
+
+  web-vitals@6.2.3: {}
 
   webpack-virtual-modules@0.6.2: {}
 

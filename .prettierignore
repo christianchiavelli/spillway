@@ -11,3 +11,4 @@ apps/web/.svelte-kit/
 coverage/
 test-results/
 playwright-report/
+vitals-report/

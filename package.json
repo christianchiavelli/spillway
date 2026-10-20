@@ -26,6 +26,10 @@
     "contract:check": "pnpm --filter @spillway/web run api:check",
     "ci": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test",
     "e2e": "pnpm --filter @spillway/e2e run test:e2e",
+    "vitals:stack": "docker compose --file compose.yaml --file e2e/vitals/compose.yaml up --wait --build",
+    "vitals": "pnpm --filter @spillway/e2e run vitals",
+    "vitals:accept": "node e2e/vitals/accept.ts",
+    "vitals:record": "node e2e/vitals/record.ts",
     "screenshots": "pnpm --filter @spillway/e2e run screenshots"
   },
   "devDependencies": {

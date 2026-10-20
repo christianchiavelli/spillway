@@ -14,6 +14,7 @@ coverage/
 test-results/
 playwright-report/
 blob-report/
+vitals-report/
 e2e/.auth/
 
 # Environment

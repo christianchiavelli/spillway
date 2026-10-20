@@ -66,9 +66,10 @@ spillway/
 │   ├── vite.config.ts          SvelteKit's options (CSP, CSRF, origin), Paraglide, and the Vitest projects
 │   └── Dockerfile              adapter-node's output on Node
 ├── e2e/                        Playwright against the running stack: desktop, phone, no JavaScript
+│   └── vitals/                 the Core Web Vitals on a slow phone, on recorded sums (ADR 0028)
 ├── docs/                       this file, the decision records in adr/, the logo and the map
 ├── compose.yaml                db, migrate, api, sync and web
-└── .github/workflows/ci.yml
+└── .github/workflows/ci.yml    every check, the workflow's own audit (ADR 0029) and the Web Vitals
 ```
 
 ## Layers, and which way they point

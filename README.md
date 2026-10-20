@@ -145,6 +145,8 @@ The ONS publishes it on its open data portal under CC-BY, plant by plant in half
 pnpm run ci              # format, lint, types, unit tests, and component tests in Chromium
 pnpm run contract:check  # the web's generated client matches the contract
 pnpm run e2e             # Playwright on a laptop, on a phone and with JavaScript off, against the stack and its data
+pnpm run vitals:stack    # the stack on the recorded sums, in place of the sync (stop the usual one first)
+pnpm run vitals          # the Core Web Vitals of each page, on that stack
 
 cd services/api
 go test -race ./...                                              # the API's unit tests
@@ -153,7 +155,15 @@ go test -race -tags integration ./internal/adapter/postgres/...  # against a rea
 
 The domain and the use cases are tested in memory, against fakes of their own interfaces, and the Postgres adapter against a real Postgres 18, forty creates at once for one account included, and a month loaded, read, revised and read again. The ONS adapter reads a Parquet file its test writes, from a test server that answers like the bucket. Vitest runs the components in Chromium. Playwright waits for the sync to load every month, then drives the whole stack as a visitor would: every state of every page audited by axe against WCAG 2.2 AA, no console error allowed, a content security policy report included, and every internal link followed.
 
-CI runs the same, and golangci-lint with the layer rules, govulncheck, a check that generated code matches its sources, and oasdiff against the previous commit's contract. Then it builds the stack with compose and runs the browser checks against it.
+CI runs the same, and golangci-lint with the layer rules, govulncheck, a check that generated code matches its sources, and oasdiff against the previous commit's contract. Then it builds the stack with compose and runs the browser checks against it. actionlint and zizmor check the workflow itself, for mistakes and for the ways a workflow leaks its token ([ADR 0029](docs/adr/0029-the-workflow-is-audited-too.md)).
+
+Every push also measures LCP, CLS and INP on the phone and connection Lighthouse emulates for mobile, five visits to each page, each one loaded cold, read to the end and used, and fails when a page measures worse than its baseline. The stack runs on the sums of the ONS's files as they were synced once, so the numbers move with the code and not with the day's data; `pnpm run vitals:record` takes a new recording, and `pnpm run vitals:accept` the next baseline from CI's runs ([ADR 0028](docs/adr/0028-web-vitals-measured-on-recorded-sums.md)).
+
+<!-- web-vitals -->
+
+No baseline yet: the first is accepted from CI's runs.
+
+<!-- /web-vitals -->
 
 ---
 

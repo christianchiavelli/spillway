@@ -7,7 +7,8 @@
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "screenshots": "node screenshots.ts"
+    "screenshots": "node screenshots.ts",
+    "vitals": "playwright test --config playwright.vitals.config.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "catalog:",
@@ -16,7 +17,9 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
+    "prettier": "catalog:",
     "typescript": "catalog:",
-    "typescript-eslint": "catalog:"
+    "typescript-eslint": "catalog:",
+    "web-vitals": "catalog:"
   }
 }

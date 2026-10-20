@@ -1,6 +1,6 @@
 # 17. CI with least privilege and pinned actions
 
-- Status: accepted
+- Status: accepted; extended by [ADR 0029](0029-the-workflow-is-audited-too.md), which audits the workflow, and joined by the Web Vitals job of [ADR 0028](0028-web-vitals-measured-on-recorded-sums.md)
 - Date: 2026-10-17
 
 ## Context
