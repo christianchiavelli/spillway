@@ -2,6 +2,9 @@ pnpm-lock.yaml
 services/
 apps/web/src/lib/api/generated/
 apps/web/src/lib/paraglide/
+# inlang writes its cache and readmes beside the settings, the only file of its own we keep
+apps/web/project.inlang/*
+!apps/web/project.inlang/settings.json
 apps/web/static/
 apps/web/build/
 apps/web/.svelte-kit/
