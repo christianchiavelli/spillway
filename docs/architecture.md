@@ -52,10 +52,10 @@ spillway/
 ├── apps/web/                   SvelteKit 3: the pages
 │   ├── src/
 │   │   ├── hooks.ts            takes /pt-br off an address before routing (ADR 0026)
-│   │   ├── hooks.server.ts     request id, the edition, security headers, the session on every request
+│   │   ├── hooks.server.ts     request id, the edition, the theme, security headers, the session
 │   │   ├── env.ts              API_URL, checked when the server starts
-│   │   ├── app.css             the design system's tokens and type styles
-│   │   ├── routes/             the overview (/), plants, history, alerts and a new one, signing in and out
+│   │   ├── app.css             the design system's tokens, each colour in both themes, and type styles
+│   │   ├── routes/             the overview (/), plants, history, alerts and a new one, signing in and out, the theme
 │   │   └── lib/
 │   │       ├── api/generated/  Hey API's types, client and Zod schemas: not edited by hand
 │   │       ├── server/         server only: the API client, session and flash cookies, form readers
@@ -100,7 +100,7 @@ Someone fills in the form on `/alerts` and presses Create Alert.
 | Step | Where | What happens |
 | --- | --- | --- |
 | 1 | `routes/alerts/+page.svelte` | A `<form method="POST" action="?/create">`, which posts without JavaScript. With it, `enhanceForm` blocks a second submit and shows the pending state. |
-| 2 | `hooks.server.ts` | The request gets an id, and the edition its address names: `/pt-br/alerts` is the same route in Portuguese, and every message and link the request renders follows it. The session cookie becomes `locals.session` after the API confirms it (`GET /v1/sessions/current`), and its deadline moves forward. |
+| 2 | `hooks.server.ts` | The request gets an id, and the edition its address names: `/pt-br/alerts` is the same route in Portuguese, and every message and link the request renders follows it. The theme the reader picked, from its cookie, goes on `<html>` as `data-theme` (ADR 0030). The session cookie becomes `locals.session` after the API confirms it (`GET /v1/sessions/current`), and its deadline moves forward. |
 | 3 | `routes/alerts/+page.server.ts` | The `create` action reads the form, and parses it with `zNewAlert`, generated from the contract. A broken rule answers 422 here, with the values as typed and an error per field, without calling the API. |
 | 4 | `lib/server/api.ts` | A client for this request alone: the bearer token, `X-Request-Id`, a five-second timeout. The answer is parsed with `zAlert` before anyone reads it. |
 | 5 | `httpapi/router.go` | Middleware, in order: request id, access log, panic recovery, API headers, origin check, body limit, deadline. |

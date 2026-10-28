@@ -6,9 +6,11 @@ import { type Browser, chromium, expect, type Page } from '@playwright/test';
 /*
  * The README's screens, taken from the stack `docker compose up --wait --build`
  * started, once the sync has loaded the ONS's files: `pnpm run screenshots`,
- * or `pnpm run screenshots <name>…` for some. The data pages show the latest
- * day published; the alert pages are taken as Ana, an account of the script's
- * own at example.com, made the first time and given the same five alerts.
+ * or `pnpm run screenshots <name>…` for some. The data pages show DAY, its
+ * week or its month, and the history and the alerts the latest published; the
+ * alert pages are taken as Ana, an account of the script's own at example.com,
+ * made the first time and given the same five alerts. A screen in the dark
+ * theme asks for it as a device would, through System.
  */
 
 const base = process.env['E2E_BASE_URL'] ?? 'http://localhost:8090';
@@ -17,6 +19,14 @@ const out = fileURLToPath(new URL('../docs/screenshots/', import.meta.url));
 const LAPTOP = { width: 1440, height: 900 };
 const PHONE = { width: 390, height: 844 };
 const ANA = { email: 'ana@example.com', password: 'correct horse battery staple' };
+
+/**
+ * A Sunday when half of what the plants could have generated was curtailed: a
+ * full chart, and the same one, with the figures the README's descriptions
+ * give, each time the screens are taken, its month's once the month is all
+ * published. Only a revision of the ONS's file moves them.
+ */
+const DAY = '2026-10-18';
 
 /** Where and what the grid curtails most, at thresholds that some days pass and most do not. */
 const ALERTS = [
@@ -32,11 +42,12 @@ const ALERTS = [
   { name: 'North wind', source: 'Wind', subsystem: 'North', threshold: '1500' },
 ] as const;
 
-async function open(browser: Browser, viewport = LAPTOP) {
+async function open(browser: Browser, viewport = LAPTOP, colorScheme: 'light' | 'dark' = 'light') {
   const context = await browser.newContext({
     baseURL: base,
     viewport,
     locale: 'en-US',
+    colorScheme,
     deviceScaleFactor: 1,
   });
   return { context, page: await context.newPage() };
@@ -94,6 +105,18 @@ async function alerts(page: Page, wanted: 'five' | 'none') {
   await page.reload(); // without the toast
 }
 
+/** The month by subsystem, a row pointed at so the map picks its region out. */
+async function where(page: Page) {
+  await page.goto(`/?period=month&date=${DAY}`);
+  const card = page.getByRole('region', { name: 'By Subsystem' });
+  // The card's top just under the sticky header.
+  await card.evaluate((el) => {
+    window.scrollBy(0, el.getBoundingClientRect().top - 80);
+  });
+  await settle(page);
+  await card.getByRole('link', { name: 'Southeast and Centre-West' }).hover();
+}
+
 /** Until the page holds still: fonts in, charts measured, animations done, the pointer away. */
 async function settle(page: Page, pointer = true) {
   if (pointer) {
@@ -109,19 +132,19 @@ async function settle(page: Page, pointer = true) {
 const screens: Record<string, (browser: Browser) => Promise<Page>> = {
   async overview(browser) {
     const { page } = await open(browser);
-    await page.goto('/');
+    await page.goto(`/?date=${DAY}`);
     return page;
   },
 
   async 'overview-month'(browser) {
     const { page } = await open(browser);
-    await page.goto('/?period=month');
+    await page.goto(`/?period=month&date=${DAY}`);
     return page;
   },
 
   async 'overview-tooltip'(browser) {
     const { page } = await open(browser);
-    await page.goto('/');
+    await page.goto(`/?date=${DAY}`);
     const chart = page.getByRole('img', { name: /^Energy curtailed in each half hour/ });
     await chart.scrollIntoViewIfNeeded();
     await settle(page);
@@ -134,33 +157,45 @@ const screens: Record<string, (browser: Browser) => Promise<Page>> = {
 
   async 'overview-where'(browser) {
     const { page } = await open(browser);
-    await page.goto('/?period=month');
-    const card = page.getByRole('region', { name: 'By Subsystem' });
-    // The card's top just under the sticky header.
-    await card.evaluate((el) => {
-      window.scrollBy(0, el.getBoundingClientRect().top - 80);
-    });
-    await settle(page);
-    // A row pointed at, so the map picks its region out.
-    await card.getByRole('link', { name: 'Southeast and Centre-West' }).hover();
+    await where(page);
     return page;
   },
 
   async 'overview-pt'(browser) {
     const { page } = await open(browser);
-    await page.goto('/pt-br');
+    await page.goto(`/pt-br?date=${DAY}`);
+    return page;
+  },
+
+  async 'overview-dark'(browser) {
+    const { page } = await open(browser, LAPTOP, 'dark');
+    await page.goto(`/?date=${DAY}`);
+    return page;
+  },
+
+  async 'overview-where-dark'(browser) {
+    const { page } = await open(browser, LAPTOP, 'dark');
+    await where(page);
+    return page;
+  },
+
+  async 'theme-menu'(browser) {
+    const { page } = await open(browser);
+    await page.goto(`/?date=${DAY}`);
+    await page.getByRole('button', { name: 'Theme: System' }).click();
+    await expect(page.getByRole('group', { name: 'Theme' })).toBeVisible();
     return page;
   },
 
   async 'overview-phone'(browser) {
     const { page } = await open(browser, PHONE);
-    await page.goto('/');
+    await page.goto(`/?date=${DAY}`);
     return page;
   },
 
   async plants(browser) {
     const { page } = await open(browser);
-    await page.goto('/plants?period=week');
+    await page.goto(`/plants?period=week&date=${DAY}`);
     return page;
   },
 
@@ -248,7 +283,10 @@ try {
     if (names.length > 0 && !names.includes(name)) continue;
     const page = await take(browser);
     // The tooltip and the map shots keep the pointer where they put it.
-    await settle(page, !['overview-tooltip', 'overview-where'].includes(name));
+    await settle(
+      page,
+      !['overview-tooltip', 'overview-where', 'overview-where-dark'].includes(name),
+    );
     await page.screenshot({ path: `${out}${name}.png` });
     await page.context().close();
     console.log(`docs/screenshots/${name}.png`);

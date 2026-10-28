@@ -2,22 +2,22 @@
 
 Alerts on the wind and solar energy Brazil's grid operator keeps from being generated, built for [the ONS's open curtailment data](https://dados.ons.org.br).
 
-Spillway reads the ONS's files every hour and shows what was curtailed: a day, a week or a month against the one before, the plants that lost the most, and every month since the data begins. An account keeps up to twenty alerts, each a daily limit on one source in one subsystem: tell me when more than 150,000 MWh of Northeast wind goes unused in a day. Before an alert is saved, a chart shows the days of the last thirty it would have fired on. Every page is in English and, under `/pt-br`, in Brazilian Portuguese.
+Spillway reads the ONS's files every hour and shows what was curtailed: a day, a week or a month against the one before, the plants that lost the most, and every month since the data begins. An account keeps up to twenty alerts, each a daily limit on one source in one subsystem: tell me when more than 150,000 MWh of Northeast wind goes unused in a day. Before an alert is saved, a chart shows the days of the last thirty it would have fired on. Every page is in English and, under `/pt-br`, in Brazilian Portuguese, in a light theme or a dark one: the device's, unless the reader picks.
 
 SvelteKit 3 and Svelte 5 in front, a Go 1.27 API behind it, Postgres 18 behind that, and an OpenAPI 3.1 contract between the two servers that both are generated from.
 
-![The overview of Sunday, October 18, 2026: 152 GWh curtailed, 44% of what the plants could have generated, 64.7 GWh of wind and 87.4 GWh of solar, and a column per half hour, wind and solar stacked, peaking at 11,160 MWh at 10:00, with a switch to see it as a table](docs/screenshots/overview.png)
+![The overview of Sunday, October 18, 2026: 190 GWh curtailed, 50% of what the plants could have generated, 88.9 GWh of wind and 102 GWh of solar, and a column per half hour, wind and solar stacked, peaking at 12,869 MWh at 10:00, with a switch to see it as a table](docs/screenshots/overview.png)
 
 <details>
 <summary>More screens</summary>
 
 **A half hour, pointed at**
 
-![The same day's chart with a tooltip on 12:30 to 13:00: 3,518 MWh of wind, 6,177 MWh of solar, 9,696 MWh in all](docs/screenshots/overview-tooltip.png)
+![The same day's chart with a tooltip on 12:30 to 13:00: 4,262 MWh of wind, 6,997 MWh of solar, 11,259 MWh in all](docs/screenshots/overview-tooltip.png)
 
 **A month so far**
 
-![October 2026 up to the 18th: 2,524 GWh curtailed, 17% less than September 1 to 18, a column per day, and the days to come marked as not published yet](docs/screenshots/overview-month.png)
+![October 2026 up to the 27th: 3,656 GWh curtailed, 25% less than September 1 to 27, a column per day, and the days to come marked as not published yet](docs/screenshots/overview-month.png)
 
 **Where, and why**
 
@@ -37,7 +37,7 @@ SvelteKit 3 and Svelte 5 in front, a Go 1.27 API behind it, Postgres 18 behind t
 
 **A new alert, against the last 30 days**
 
-![The new alert form for Northeast wind at 150,000 MWh, beside a column per day of the last 30 with a dashed line at the threshold, the days over it in blue, and a line saying it would have fired on 5 of them](docs/screenshots/alert-preview.png)
+![The new alert form for Northeast wind at 150,000 MWh, beside a column per day of the last 30 with a dashed line at the threshold, the days over it in blue, and a line saying it would have fired on 2 of them](docs/screenshots/alert-preview.png)
 
 **A form refused, with or without JavaScript**
 
@@ -59,13 +59,23 @@ SvelteKit 3 and Svelte 5 in front, a Go 1.27 API behind it, Postgres 18 behind t
 
 **In Portuguese**
 
-![The overview in Portuguese, under /pt-br: Domingo, 18 de outubro de 2026, 152 GWh curtailed, 64,7 GWh of wind and 87,4 GWh of solar with a decimal comma, the navigation as Visão geral, Usinas, Histórico and Alertas, and EN | PT in the header with PT underlined](docs/screenshots/overview-pt.png)
+![The overview in Portuguese, under /pt-br: Domingo, 18 de outubro de 2026, 190 GWh curtailed, 88,9 GWh of wind and 102 GWh of solar with a decimal comma, the navigation as Visão geral, Usinas, Histórico and Alertas, and EN | PT in the header with PT underlined](docs/screenshots/overview-pt.png)
+
+**In the dark**
+
+![The same day in the dark theme: the navy of the header deepened, the canvas a step lighter and the cards a step lighter again, and wind and solar a step brighter, each clearing 3:1 on its card](docs/screenshots/overview-dark.png)
+
+![The month by subsystem in the dark theme, where the map shades the most curtailed lightest, so the Northeast stands out from the dark card as it does darkest on the light one](docs/screenshots/overview-where-dark.png)
+
+**The theme, picked in the header**
+
+![The theme menu open under its button, next to EN | PT: Light, Dark and System, each beside a scrap of the app in its colours, System chosen and saying it gives the light theme on this device](docs/screenshots/theme-menu.png)
 
 **A sign-in refused**
 
 ![The sign-in card saying the email address or password is wrong, inside the card above the fields, the address kept, the password cleared beside its show button, and the way to create an account centred under the card](docs/screenshots/sign-in-refused.png)
 
-Regenerate with `pnpm run screenshots`, against the stack `docker compose up --wait --build` started, or with `pnpm run screenshots <name>` for one screen. They show the latest day the ONS has published, and the alerts are taken as an account of the script's own, `ana@example.com`, whose alerts it replaces each time.
+Regenerate with `pnpm run screenshots`, against the stack `docker compose up --wait --build` started, or with `pnpm run screenshots <name>` for one screen. They show October 18, 2026, its week and its month, so the figures above stay true each time they are taken, the month's once the ONS has published all of October, and the history and the alerts as of the latest day published; the alerts are taken as an account of the script's own, `ana@example.com`, whose alerts it replaces each time.
 
 </details>
 
@@ -129,7 +139,8 @@ The ONS publishes it on its open data portal under CC-BY, plant by plant in half
 - **Twenty alerts means twenty.** Creating one locks the account's row, counts and inserts in one transaction, and a test fires forty creates at once at a real Postgres to prove only twenty land ([ADR 0008](docs/adr/0008-the-alert-limit-is-held-by-the-database.md)).
 - **Every form works without JavaScript.** Each is a plain form with a server action, enhanced when the script runs; a refused form comes back with what was typed, and an accepted one redirects, so a reload never posts it twice ([ADR 0010](docs/adr/0010-every-form-works-without-javascript.md)).
 - **Account forms that check as you go.** Sign-in and sign-up share one form: the browser checks a field when it is left, with the rules the contract already put on it, and a form it can tell is wrong is not sent; focus goes to the first field to fix, and a password can be shown ([ADR 0027](docs/adr/0027-sign-in-and-sign-up-check-each-field-as-it-is-left.md)).
-- **A dense look, accessible first.** Dark chrome, white panels, compact controls and tables, from tokens in Tailwind 4; every label visible, native selects and radios, one focus ring, an error summary that takes focus ([ADR 0009](docs/adr/0009-a-dense-dashboard-look-accessibility-first.md)), and toasts that leave on their own but never while pointed at or focused ([ADR 0023](docs/adr/0023-toasts-under-the-page-header-leave-on-their-own.md)).
+- **A dense look, accessible first.** Dark chrome, white panels, or navy ones in the dark, compact controls and tables, from tokens in Tailwind 4; every label visible, native selects and radios, one focus ring, an error summary that takes focus ([ADR 0009](docs/adr/0009-a-dense-dashboard-look-accessibility-first.md)), and toasts that leave on their own but never while pointed at or focused ([ADR 0023](docs/adr/0023-toasts-under-the-page-header-leave-on-their-own.md)).
+- **Two themes, right from the first byte.** Each colour token holds its light and its dark value side by side, in `light-dark()`, so a theme is only the `color-scheme` the page declares, and a test fails when a component paints with a raw colour. The menu in the header keeps Light, Dark or System in a cookie the server reads, so a page arrives in its theme with no script to prevent a flash, and the menu works without JavaScript too ([ADR 0030](docs/adr/0030-a-dark-theme-kept-in-a-cookie-the-server-reads.md)).
 - **The ONS's files, synced on their own.** A second process from the same binary lists the ONS's bucket every hour, loads each new or revised month by its ETag, the latest first, and replaces it whole in one transaction. The pages read the sums it keeps, never the files ([ADR 0020](docs/adr/0020-the-ons-data-is-synced-by-a-process-of-its-own.md)).
 - **Firings read from the data.** An alert's firings are a query over the daily sums, not rows of their own, so a revised day revises them too ([ADR 0021](docs/adr/0021-firings-are-read-from-the-data.md)).
 - **Charts in our own SVG.** Columns, bars and lines are Svelte components on d3-scale, drawn on the server with no style attribute for the content security policy to refuse ([ADR 0022](docs/adr/0022-charts-drawn-in-our-own-svg.md)), and a switch in each card's header shows the chart's figures as a table in its place, with radio buttons and CSS, so it works without JavaScript ([ADR 0025](docs/adr/0025-a-chart-or-its-table-by-a-switch.md)).
@@ -153,7 +164,7 @@ go test -race ./...                                              # the API's uni
 go test -race -tags integration ./internal/adapter/postgres/...  # against a real Postgres 18
 ```
 
-The domain and the use cases are tested in memory, against fakes of their own interfaces, and the Postgres adapter against a real Postgres 18, forty creates at once for one account included, and a month loaded, read, revised and read again. The ONS adapter reads a Parquet file its test writes, from a test server that answers like the bucket. Vitest runs the components in Chromium. Playwright waits for the sync to load every month, then drives the whole stack as a visitor would: every state of every page audited by axe against WCAG 2.2 AA, no console error allowed, a content security policy report included, and every internal link followed.
+The domain and the use cases are tested in memory, against fakes of their own interfaces, and the Postgres adapter against a real Postgres 18, forty creates at once for one account included, and a month loaded, read, revised and read again. The ONS adapter reads a Parquet file its test writes, from a test server that answers like the bucket. Vitest runs the components in Chromium. Playwright waits for the sync to load every month, then drives the whole stack as a visitor would: every state of every page audited by axe against WCAG 2.2 AA, in the light theme and in the dark one, no console error allowed, a content security policy report included, and every internal link followed.
 
 CI runs the same, and golangci-lint with the layer rules, govulncheck, a check that generated code matches its sources, and oasdiff against the previous commit's contract. Then it builds the stack with compose and runs the browser checks against it. actionlint and zizmor check the workflow itself, for mistakes and for the ways a workflow leaks its token ([ADR 0029](docs/adr/0029-the-workflow-is-audited-too.md)).
 

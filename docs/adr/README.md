@@ -33,3 +33,4 @@ One file per decision that had a trade-off, version pins included. Each says wha
 | [0027](0027-sign-in-and-sign-up-check-each-field-as-it-is-left.md) | Sign-in and sign-up check each field as it is left |
 | [0028](0028-web-vitals-measured-on-recorded-sums.md) | Web Vitals, measured on recorded sums |
 | [0029](0029-the-workflow-is-audited-too.md) | The workflow is audited too |
+| [0030](0030-a-dark-theme-kept-in-a-cookie-the-server-reads.md) | A dark theme, kept in a cookie the server reads |

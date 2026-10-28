@@ -71,4 +71,4 @@ The configuration is read once, at start, and every bad value is reported togeth
 
 ## Design changes
 
-A new screen, or a visible change to one, starts as screenshots the owner approves, at a laptop's width and a phone's. Only then is it built, from the tokens in `app.css` and the components in `src/lib/components/ui`, and axe checks it in the end-to-end suite.
+A new screen, or a visible change to one, starts as screenshots the owner approves, at a laptop's width and a phone's, in the light theme and the dark one. Only then is it built, from the tokens in `app.css` and the components in `src/lib/components/ui`, and axe checks it in both themes in the end-to-end suite. A colour is a role with its light and its dark value side by side in `app.css`, never a primitive in a component, which `src/tokens.spec.ts` fails on (ADR 0030).
