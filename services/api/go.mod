@@ -1,6 +1,6 @@
 module github.com/christianchiavelli/spillway/services/api
 
-go 1.27.2
+go 1.27.3
 
 tool github.com/ogen-go/ogen/cmd/ogen
 

@@ -101,7 +101,7 @@ Then open `http://localhost:8090`. The first start downloads the ONS's files, ab
 docker compose exec web wget -qO- http://api:9090/metrics | grep '^ogen_server_request_count_total'
 ```
 
-To work on it: pnpm 11 or newer, which switches itself to the pinned 12.14.0 and downloads Node 24.22 on the first `pnpm install`, and any Go from 1.21 on, which downloads Go 1.27.2 for itself.
+To work on it: pnpm 11 or newer, which switches itself to the pinned 12.14.0 and downloads Node 24.22 on the first `pnpm install`, and any Go from 1.21 on, which downloads Go 1.27.3 for itself.
 
 ---
 
