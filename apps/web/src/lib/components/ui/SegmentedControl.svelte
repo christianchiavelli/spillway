@@ -59,7 +59,7 @@
   -->
   <div
     class={[
-      'flex w-full rounded-full border bg-grey-25 p-[0.125rem] mobile:w-fit',
+      'flex w-full rounded-full border bg-surface-track p-[0.125rem] mobile:w-fit',
       error ? 'border-stroke-error' : 'border-stroke-neutral-default',
     ]}
   >

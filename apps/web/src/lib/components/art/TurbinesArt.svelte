@@ -18,7 +18,7 @@
     <path d="M67 42c9 4 17 11 21 19-9-1-17-7-21-19" />
     <path d="M59 42c-9 4-16 11-20 19 9-1 16-7 20-19" />
   </g>
-  <g class="stroke-grey-150" stroke-width="2">
+  <g class="stroke-stroke-neutral-muted" stroke-width="2">
     <path d="M110 108 112 66h3l2 42" />
     <circle cx="113.5" cy="62" r="3" />
     <path d="M113.5 59c-1.5-7-1-14 1.5-20 2 6 2 13-1.5 20" />

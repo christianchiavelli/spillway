@@ -11,7 +11,7 @@
 </script>
 
 <!--
-  The page header: a white band with the page title in Lora. It is the anchor
+  The page header: a band of the cards' colour with the page title in Lora. It is the anchor
   the toasts are placed under, so they never cover the page's own actions.
 -->
 <header

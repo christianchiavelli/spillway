@@ -5,6 +5,7 @@ import { paraglideMiddleware } from '#lib/paraglide/server.js';
 import { api } from '#lib/server/api.ts';
 import { log } from '#lib/server/log.ts';
 import { endSession, keepSession, readSessionToken } from '#lib/server/session.ts';
+import { THEME_COOKIE, themeOf } from '#lib/theme.ts';
 
 /** Gives the request an id, which the API's logs and the error page share. */
 const identify: Handle = async ({ event, resolve }) => {
@@ -24,6 +25,18 @@ const localize: Handle = ({ event, resolve }) =>
   paraglideMiddleware(event.request, ({ locale }) =>
     resolve(event, { transformPageChunk: ({ html }) => html.replace('%lang%', locale) }),
   );
+
+/**
+ * The theme the reader picked in the header, from its cookie, on <html> before
+ * the page leaves, so it is drawn in that theme from the first byte, with no
+ * script. Every page is rendered per request and none is cached; a cache in
+ * front would have to vary by the cookie (ADR 0030).
+ */
+const theme: Handle = ({ event, resolve }) => {
+  const picked = themeOf(event.cookies.get(THEME_COOKIE));
+  event.locals.theme = picked;
+  return resolve(event, { transformPageChunk: ({ html }) => html.replace('%theme%', picked) });
+};
 
 /**
  * The headers the content security policy in vite.config.ts does not cover.
@@ -63,7 +76,7 @@ const authenticate: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-export const handle = sequence(identify, localize, secureHeaders, authenticate);
+export const handle = sequence(identify, localize, theme, secureHeaders, authenticate);
 
 /**
  * Errors the app expects (a 404, a redirect to sign in) keep SvelteKit's

@@ -25,7 +25,7 @@
       aria-current={edition.locale === current ? 'true' : undefined}
       data-sveltekit-reload
       class={[
-        'rounded-200 px-300 py-200 ts-primary-button-s underline-offset-4',
+        'rounded-200 px-300 py-200 ts-primary-button-s underline-offset-4 max-[22.5rem]:px-200',
         edition.locale === current
           ? 'text-text-on-dark-primary underline decoration-2'
           : 'text-text-on-dark-secondary hover:text-text-on-dark-primary',

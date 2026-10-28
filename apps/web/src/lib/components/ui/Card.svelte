@@ -14,7 +14,7 @@
   const id = $props.id();
 </script>
 
-<!-- The content wrapper and its header: a white panel on the canvas. -->
+<!-- The content wrapper and its header: a panel on the canvas, lighter in both themes. -->
 <section
   aria-labelledby={`${id}-title`}
   class="flex flex-col gap-600 rounded-300 border border-stroke-neutral-default bg-surface-container-primary p-600"

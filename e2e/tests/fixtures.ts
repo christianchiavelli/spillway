@@ -57,23 +57,35 @@ export async function signUp(page: Page, email = newEmail()) {
 }
 
 /**
- * Runs axe with every WCAG 2.2 AA rule on the page as it settles. axe reads
- * colours as they are drawn, and a toast halfway through fading in has less
- * contrast than it ends with, so finite animations finish first.
+ * Runs axe with every WCAG 2.2 AA rule on the page as it settles, in the
+ * light theme and in the dark one: a page left to follow the device takes
+ * either, as the test asks the browser for it. axe reads colours as they are
+ * drawn, and a toast halfway through fading in, or a control halfway into
+ * the other theme, has less contrast than it ends with, so finite animations
+ * finish first. The device's scheme is put back after.
  */
 export async function expectAccessible(page: Page) {
-  await page.evaluate(() =>
-    Promise.allSettled(
-      document
-        .getAnimations()
-        .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
-        .map((animation) => animation.finished),
-    ),
-  );
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-    .analyze();
-  expect(
-    results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
-  ).toEqual([]);
+  const dark = await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);
+  for (const colorScheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme });
+    await page.evaluate(async () => {
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await Promise.allSettled(
+        document
+          .getAnimations()
+          .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
+          .map((animation) => animation.finished),
+      );
+    });
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    expect(
+      results.violations.map(
+        (v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`,
+      ),
+      `axe, with the device asking for ${colorScheme}`,
+    ).toEqual([]);
+  }
+  await page.emulateMedia({ colorScheme: dark ? 'dark' : 'light' });
 }

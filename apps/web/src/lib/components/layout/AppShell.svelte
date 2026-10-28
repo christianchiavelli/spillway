@@ -12,17 +12,22 @@
   import { buttonStyles } from '#lib/components/ui/button-styles.ts';
   import { localized } from '#lib/i18n.ts';
   import { m } from '#lib/paraglide/messages.js';
+  import type { Theme } from '#lib/theme.ts';
 
   import LanguageSwitch from './LanguageSwitch.svelte';
   import Logo from './Logo.svelte';
+  import ThemeMenu from './ThemeMenu.svelte';
 
   type Props = {
     /** The signed-in address, or null for a visitor. */
     email: string | null;
+    /** The theme the reader picked, and what to do when they pick another. */
+    theme: Theme;
+    onthemechange: (theme: Theme) => void;
     children: Snippet;
   };
 
-  let { email, children }: Props = $props();
+  let { email, theme, onthemechange, children }: Props = $props();
 
   // The data is open to everyone; Alerts asks a visitor to sign in first.
   const nav = [
@@ -45,17 +50,21 @@
   {m.shell_skip()}
 </a>
 
-<!-- The chrome: a dark header across the top and a dark rail on the left. -->
+<!--
+  The chrome: a dark header across the top and a dark rail on the left. On the
+  narrowest phones, under 360px, its gaps close up so the logo keeps its size.
+-->
 <header
   data-chrome
-  class="sticky top-0 z-(--z-header) flex h-[3.5rem] items-center gap-600 bg-surface-primary-cool-dark px-400"
+  class="sticky top-0 z-(--z-header) flex h-[3.5rem] items-center gap-600 bg-surface-primary-cool-dark px-400 max-[22.5rem]:gap-300"
 >
-  <a href={localized(resolve('/'))} class="rounded-200">
+  <a href={localized(resolve('/'))} class="shrink-0 rounded-200">
     <Logo />
     <span class="sr-only">{m.shell_home()}</span>
   </a>
-  <div class="ml-auto flex items-center gap-400">
+  <div class="ml-auto flex items-center gap-400 max-[22.5rem]:gap-200">
     <LanguageSwitch />
+    <ThemeMenu {theme} onchange={onthemechange} />
     {#if email === null}
       <div class="flex items-center gap-300">
         <a

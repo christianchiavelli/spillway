@@ -120,8 +120,9 @@
       {/each}
     </g>
     <!--
-      A label can run over a border or off the coast, so each one is dark in a
-      white halo, which reads on every step and on the card around the map.
+      A label can run over a border or off the coast, so each one is the text's
+      colour in a halo of the card's, which reads on every step and on the card
+      around the map, in either theme.
     -->
     {#each drawn as region (region.key)}
       <text

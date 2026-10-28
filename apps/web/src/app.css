@@ -6,6 +6,11 @@
  * (docs/adr/0009):
  * - Error text is red-300, since red-200 falls short of 4.5:1 on white.
  * - Control borders are grey-200, since a field's only outline needs 3:1.
+ *
+ * Each role holds its light and its dark colour side by side, in light-dark(),
+ * so a theme is nothing more than the `color-scheme` <html> declares, and a
+ * component paints with roles only: a primitive would not change with it
+ * (docs/adr/0030).
  */
 @import 'tailwindcss';
 
@@ -26,7 +31,10 @@
   --color-white: #ffffff;
   --color-black: #000000;
   --color-blue-50: #e3f4ff;
+  --color-blue-75: #5cc2ff;
   --color-blue-100: #28b4ff;
+  --color-blue-150: #3f8ff0;
+  --color-blue-175: #1a6fd4;
   --color-blue-200: #0a64c8;
   --color-blue-300: #003cb2;
   --color-blue-400: #002296;
@@ -35,6 +43,7 @@
   --color-grey-50: #edeff3;
   --color-grey-100: #cfd3db;
   --color-grey-150: #b2b9ca;
+  --color-grey-175: #8890a3;
   --color-grey-200: #6e768a;
   --color-grey-300: #404e6c;
   --color-grey-400: #29334b;
@@ -42,10 +51,16 @@
   --color-cool-grey-25: #f7f9fc;
   --color-cool-grey-50: #ebeff6;
   --color-cool-grey-100: #d5dcea;
+  --color-cool-grey-150: #b8c6e6;
   --color-cool-grey-200: #6980b3;
   --color-cool-grey-300: #2f4576;
+  --color-cool-grey-350: #44598a;
   --color-cool-grey-400: #283656;
+  --color-cool-grey-450: #1f2b46;
+  --color-cool-grey-475: #1b263f;
+  --color-cool-grey-490: #18223a;
   --color-cool-grey-500: #11192d;
+  --color-cool-grey-600: #0a1020;
   --color-turquoise-50: #e9feff;
   --color-turquoise-100: #ace6f0;
   --color-turquoise-200: #5ac4d4;
@@ -62,76 +77,99 @@
   --color-yellow-50: #fcf8d9;
   --color-yellow-200: #eeaf00;
   --color-yellow-400: #b05223;
+  --color-amber-200: #e08a1f;
   --color-amber-300: #d97706;
+  /* The dark theme's tinted fills: the navy of its cards, leaning to a hue. */
+  --color-blue-tint: #16305c;
+  --color-green-tint: #0f2e2c;
+  --color-red-tint: #3e2438;
 
   /* Text */
-  --color-text-primary-default: var(--color-blue-500);
-  --color-text-primary-link: var(--color-blue-300);
-  --color-text-primary-link-hover: var(--color-blue-400);
-  --color-text-primary-disabled: var(--color-grey-200);
-  --color-text-secondary-default: var(--color-grey-300);
+  --color-text-primary-default: light-dark(var(--color-blue-500), var(--color-cool-grey-50));
+  --color-text-primary-link: light-dark(var(--color-blue-300), var(--color-blue-75));
+  --color-text-primary-link-hover: light-dark(var(--color-blue-400), var(--color-blue-50));
+  --color-text-primary-disabled: light-dark(var(--color-grey-200), var(--color-grey-175));
+  --color-text-secondary-default: light-dark(var(--color-grey-300), var(--color-grey-150));
   --color-text-on-dark-primary: var(--color-white);
   --color-text-on-dark-secondary: var(--color-grey-100);
-  --color-text-semantic-success: #00847c;
-  --color-text-semantic-warning: var(--color-yellow-400);
-  --color-text-semantic-error: var(--color-red-300);
-  --color-text-semantic-info: var(--color-blue-300);
+  --color-text-semantic-success: light-dark(#00847c, #3cc6b5);
+  --color-text-semantic-warning: light-dark(var(--color-yellow-400), var(--color-yellow-200));
+  --color-text-semantic-error: light-dark(var(--color-red-300), var(--color-red-100));
+  --color-text-semantic-info: light-dark(var(--color-blue-300), var(--color-blue-75));
 
-  /* Surfaces */
-  --color-surface-canvas: var(--color-cool-grey-25);
-  --color-surface-container-primary: var(--color-white);
-  --color-surface-container-secondary: var(--color-cool-grey-50);
-  --color-surface-container-tertiary: var(--color-cool-grey-100);
-  --color-surface-container-hover: var(--color-blue-50);
-  --color-surface-primary-default: var(--color-blue-300);
-  --color-surface-primary-hover: var(--color-blue-400);
-  --color-surface-primary-disabled: var(--color-grey-150);
-  --color-surface-primary-dark: var(--color-grey-500);
-  --color-surface-primary-cool-dark: var(--color-cool-grey-500);
-  --color-surface-zebra: var(--color-cool-grey-25);
+  /* Surfaces. In the dark, a surface is lighter the nearer it comes: the
+     chrome deepest, then the canvas, then the cards on it. */
+  --color-surface-canvas: light-dark(var(--color-cool-grey-25), var(--color-cool-grey-500));
+  --color-surface-container-primary: light-dark(var(--color-white), var(--color-cool-grey-490));
+  --color-surface-container-secondary: light-dark(
+    var(--color-cool-grey-50),
+    var(--color-cool-grey-450)
+  );
+  --color-surface-container-tertiary: light-dark(
+    var(--color-cool-grey-100),
+    var(--color-cool-grey-400)
+  );
+  --color-surface-container-hover: light-dark(var(--color-blue-50), var(--color-blue-tint));
+  /* White text clears 4.5:1 on both blues of each theme. */
+  --color-surface-primary-default: light-dark(var(--color-blue-300), var(--color-blue-200));
+  --color-surface-primary-hover: light-dark(var(--color-blue-400), var(--color-blue-175));
+  --color-surface-primary-disabled: light-dark(var(--color-grey-150), var(--color-cool-grey-300));
+  --color-surface-primary-dark: light-dark(var(--color-grey-500), var(--color-cool-grey-475));
+  --color-surface-primary-cool-dark: light-dark(
+    var(--color-cool-grey-500),
+    var(--color-cool-grey-600)
+  );
+  --color-surface-zebra: light-dark(var(--color-cool-grey-25), var(--color-cool-grey-475));
+  /* The track a segmented control's options sit in. */
+  --color-surface-track: light-dark(var(--color-grey-25), var(--color-cool-grey-500));
 
   /* Strokes */
-  --color-stroke-neutral-default: var(--color-grey-100);
-  --color-stroke-neutral-hover: var(--color-grey-200);
+  --color-stroke-neutral-default: light-dark(var(--color-grey-100), var(--color-cool-grey-400));
+  --color-stroke-neutral-hover: light-dark(var(--color-grey-200), var(--color-cool-grey-350));
+  /* A line drawn back, like the idle turbine of the empty state. */
+  --color-stroke-neutral-muted: light-dark(var(--color-grey-150), var(--color-grey-300));
   --color-stroke-neutral-on-dark: var(--color-grey-300);
-  --color-stroke-control: var(--color-grey-200);
-  --color-stroke-control-hover: var(--color-grey-300);
-  --color-stroke-primary-default: var(--color-blue-300);
-  --color-stroke-primary-hover: var(--color-blue-400);
-  --color-stroke-error: var(--color-red-200);
+  --color-stroke-control: light-dark(var(--color-grey-200), var(--color-grey-175));
+  --color-stroke-control-hover: light-dark(var(--color-grey-300), var(--color-grey-150));
+  --color-stroke-primary-default: light-dark(var(--color-blue-300), var(--color-blue-100));
+  --color-stroke-primary-hover: light-dark(var(--color-blue-400), var(--color-blue-50));
+  --color-stroke-error: light-dark(var(--color-red-200), var(--color-red-100));
 
   /* Icons */
-  --color-icon-default: var(--color-grey-400);
-  --color-icon-secondary: var(--color-grey-300);
-  --color-icon-primary: var(--color-blue-300);
+  --color-icon-default: light-dark(var(--color-grey-400), var(--color-grey-100));
+  --color-icon-secondary: light-dark(var(--color-grey-300), var(--color-grey-150));
+  --color-icon-primary: light-dark(var(--color-blue-300), var(--color-blue-75));
   --color-icon-on-dark: var(--color-white);
-  --color-icon-disabled: var(--color-grey-200);
-  --color-icon-success: #00847c;
-  --color-icon-error: var(--color-red-200);
+  --color-icon-disabled: light-dark(var(--color-grey-200), var(--color-grey-175));
+  --color-icon-success: light-dark(#00847c, #3cc6b5);
+  --color-icon-error: light-dark(var(--color-red-200), var(--color-red-100));
 
   /* Fills for chips, bands and toasts */
-  --color-visual-light-blue: var(--color-blue-50);
-  --color-visual-light-green: var(--color-green-50);
-  --color-visual-light-red: var(--color-red-50);
-  --color-visual-light-neutral: var(--color-grey-50);
-  --color-visual-light-turquoise: var(--color-turquoise-50);
-  --color-visual-dark-turquoise: var(--color-turquoise-400);
+  --color-visual-light-blue: light-dark(var(--color-blue-50), var(--color-blue-tint));
+  --color-visual-light-green: light-dark(var(--color-green-50), var(--color-green-tint));
+  --color-visual-light-red: light-dark(var(--color-red-50), var(--color-red-tint));
+  --color-visual-light-neutral: light-dark(var(--color-grey-50), var(--color-cool-grey-450));
+  --color-visual-light-turquoise: light-dark(var(--color-turquoise-50), var(--color-turquoise-500));
+  --color-visual-dark-turquoise: light-dark(var(--color-turquoise-400), var(--color-turquoise-200));
 
   /* Charts. Wind is the blue of the sky the turbines stand in, solar the amber
-     of the midday sun: both clear 3:1 on white, and they stay apart for the
-     common kinds of colour blindness. */
-  --color-chart-wind: var(--color-blue-200);
-  --color-chart-solar: var(--color-amber-300);
-  --color-chart-grid: var(--color-cool-grey-50);
-  --color-chart-axis: var(--color-grey-150);
-  --color-chart-muted: var(--color-grey-100);
+     of the midday sun: both clear 3:1 on the cards of each theme, a step
+     lighter in the dark, and they stay apart for the common kinds of colour
+     blindness. */
+  --color-chart-wind: light-dark(var(--color-blue-200), var(--color-blue-150));
+  --color-chart-solar: light-dark(var(--color-amber-300), var(--color-amber-200));
+  --color-chart-grid: light-dark(var(--color-cool-grey-50), var(--color-cool-grey-450));
+  --color-chart-axis: light-dark(var(--color-grey-150), var(--color-grey-300));
+  --color-chart-muted: light-dark(var(--color-grey-100), var(--color-cool-grey-400));
   /* The map's four steps, from the least curtailed to the most, in the navy
      of the app's chrome: greyer than wind's blue, so no shade reads as a
-     source. Labels sit in a white halo, so they read on all four. */
-  --color-chart-scale-1: var(--color-cool-grey-100);
-  --color-chart-scale-2: var(--color-cool-grey-200);
-  --color-chart-scale-3: var(--color-cool-grey-300);
-  --color-chart-scale-4: var(--color-blue-500);
+     source. The most stands out from the card in each theme, darkest on the
+     light one and lightest on the dark, and labels sit in a halo of the
+     card's colour, so they read on all four. */
+  --color-chart-scale-1: light-dark(var(--color-cool-grey-100), var(--color-cool-grey-400));
+  --color-chart-scale-2: light-dark(var(--color-cool-grey-200), var(--color-cool-grey-350));
+  --color-chart-scale-3: light-dark(var(--color-cool-grey-300), var(--color-cool-grey-200));
+  --color-chart-scale-4: light-dark(var(--color-blue-500), var(--color-cool-grey-150));
 
   /* Spacing: 2px to 72px */
   --spacing-0: 0;
@@ -155,10 +193,16 @@
   --radius-600: 1.5rem;
   --radius-full: calc(infinity * 1px);
 
-  --shadow-raised: 0 1px 3px 0 #0000001a, 0 1px 2px -1px #0000001a;
-  --shadow-focus-lift: 0 2px 4px -2px #1d20270a, 0 8px 12px -4px #1a1c231a;
-  --shadow-overlay: 0 12px 28px -10px rgb(41 45 65 / 0.2), 0 12px 20px -10px rgb(37 40 53 / 0.12);
-  --shadow-band: 0 4px 10px 0 rgb(0 0 0 / 0.05);
+  /* A shadow barely shows on a dark ground, so the dark theme's are deeper. */
+  --shadow-raised:
+    0 1px 3px 0 light-dark(#0000001a, #0006), 0 1px 2px -1px light-dark(#0000001a, #0006);
+  --shadow-focus-lift:
+    0 2px 4px -2px light-dark(#1d20270a, #0000004d),
+    0 8px 12px -4px light-dark(#1a1c231a, #00000073);
+  --shadow-overlay:
+    0 12px 28px -10px light-dark(rgb(41 45 65 / 0.2), rgb(0 0 0 / 0.6)),
+    0 12px 20px -10px light-dark(rgb(37 40 53 / 0.12), rgb(0 0 0 / 0.45));
+  --shadow-band: 0 4px 10px 0 light-dark(rgb(0 0 0 / 0.05), rgb(0 0 0 / 0.25));
 
   --breakpoint-mobile: 30rem;
   --breakpoint-tablet: 64rem;
@@ -184,6 +228,21 @@
     }
   }
 }
+
+/* `dark:` is the app's dark theme, picked or followed from the device, so a
+   utility under it never disagrees with the tokens. `device-dark:` is the
+   device's own setting, whatever the reader picked. */
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where([data-theme='system'], [data-theme='system'] *) {
+      @slot;
+    }
+  }
+}
+@custom-variant device-dark (@media (prefers-color-scheme: dark));
 
 /* Type styles, `ts-*`: one class sets family, size, line height and weight. */
 @utility ts-secondary-heading-s {
@@ -301,15 +360,37 @@
     scroll-padding-top: 4.5rem;
   }
 
+  /* The theme: the device's scheme, unless the reader picked one, which the
+     server writes on <html> (src/lib/theme.ts). light-dark() reads it, so
+     every role takes its colour from here. */
+  :root {
+    color-scheme: light dark;
+  }
+  :root[data-theme='light'] {
+    color-scheme: light;
+  }
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  /* While the theme changes, nothing eases: applyTheme() in src/lib/theme.ts. */
+  .theme-switching,
+  .theme-switching *,
+  .theme-switching *::before,
+  .theme-switching *::after {
+    transition: none !important;
+  }
+
   /* One focus ring for everything, rather than one per component. */
   :focus-visible {
     outline: 2px solid var(--color-stroke-primary-default);
     outline-offset: 2px;
   }
 
-  /* The header and the rail are navy, so a ring in them is the light blue
-     drawn for dark grounds: the usual blue falls short of 3:1 on them. */
-  [data-chrome] :focus-visible {
+  /* The header and the rail are dark in both themes, so a ring in them is the
+     dark theme's: the light theme's blue falls short of 3:1 on their navy. A
+     popover opened from the header is a surface of its own. */
+  [data-chrome] :focus-visible:not([popover] *) {
     outline-color: var(--color-blue-100);
   }
 
@@ -423,6 +504,36 @@
         calc(anchor(--page-header bottom, 3.5rem) + var(--spacing-600)),
         calc(3.5rem + var(--spacing-600))
       );
+    }
+  }
+}
+
+/* The theme menu hangs 0.375rem under its button, their right edges lined up,
+   unless that would push it off a narrow phone: then it keeps 0.75rem from the
+   screen's left edge. It is a popover, in the top layer, so the browser places
+   it fixed, and a browser that cannot anchor it hangs it at the same height
+   from the right of the header instead. A browser without popovers shows
+   neither the menu nor its button, and the page follows the device. */
+@layer components {
+  .theme-menu {
+    inset: auto;
+    top: 3.125rem;
+    right: var(--spacing-400);
+    margin: 0;
+  }
+
+  @supports (anchor-name: --a) {
+    .theme-menu {
+      position-anchor: --theme-menu;
+      top: calc(anchor(bottom) + 0.375rem);
+      right: min(anchor(right), calc(100% - 15.5rem - var(--spacing-400)));
+    }
+  }
+
+  @supports not selector(:popover-open) {
+    [popover],
+    [popovertarget] {
+      display: none;
     }
   }
 }

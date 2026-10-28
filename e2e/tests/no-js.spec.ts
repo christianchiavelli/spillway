@@ -53,6 +53,22 @@ test('without JavaScript, an account and an alert are made the old way', async (
   await expect(page).toHaveURL(/\/sign-in$/);
 });
 
+test('without JavaScript, the theme is picked from the same menu, and the page comes back in it', async ({
+  page,
+}) => {
+  await page.goto('/plants?period=week');
+  // The menu is a popover, which the browser opens without a script.
+  await page.getByRole('button', { name: 'Theme: System' }).click();
+  await page.getByRole('button', { name: 'Dark', exact: true }).click();
+  await expect(page).toHaveURL(/\/plants\?period=week$/);
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.getByRole('button', { name: 'Theme: Dark' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Theme: Dark' }).click();
+  await page.getByRole('button', { name: 'System', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'system');
+});
+
 test('without JavaScript, the data pages page and filter through their addresses', async ({
   page,
 }) => {

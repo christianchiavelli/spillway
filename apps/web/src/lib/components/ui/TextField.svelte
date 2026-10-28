@@ -77,7 +77,7 @@
         'h-full w-full min-w-0 rounded-200 bg-transparent px-300 ts-primary-body-l text-text-primary-default outline-none placeholder:text-text-primary-disabled',
         'disabled:cursor-not-allowed disabled:text-text-primary-disabled',
         // A browser paints a field it filled in its own blue, which the
-        // notched label would cut across; the field keeps its white instead.
+        // notched label would cut across; the field keeps its own colour instead.
         'autofill:shadow-[inset_0_0_0_2rem_var(--color-surface-container-primary)] autofill:[-webkit-text-fill-color:var(--color-text-primary-default)]',
       ]}
       {...rest}

@@ -21,7 +21,7 @@
 -->
 <nav
   aria-label={label}
-  class="flex w-full rounded-full border border-stroke-neutral-default bg-grey-25 p-[0.125rem] mobile:w-fit"
+  class="flex w-full rounded-full border border-stroke-neutral-default bg-surface-track p-[0.125rem] mobile:w-fit"
 >
   {#each items as item (item.href)}
     <a
