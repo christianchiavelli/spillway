@@ -307,6 +307,12 @@
     outline-offset: 2px;
   }
 
+  /* The header and the rail are navy, so a ring in them is the light blue
+     drawn for dark grounds: the usual blue falls short of 3:1 on them. */
+  [data-chrome] :focus-visible {
+    outline-color: var(--color-blue-100);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     ::before,

@@ -47,6 +47,7 @@
 
 <!-- The chrome: a dark header across the top and a dark rail on the left. -->
 <header
+  data-chrome
   class="sticky top-0 z-(--z-header) flex h-[3.5rem] items-center gap-600 bg-surface-primary-cool-dark px-400"
 >
   <a href={localized(resolve('/'))} class="rounded-200">
@@ -93,6 +94,7 @@
     long, and an item sliding under the header would be half a target.
   -->
   <nav
+    data-chrome
     aria-label={m.shell_nav()}
     class="sticky top-[3.5rem] h-[calc(100dvh-3.5rem)] w-[4rem] shrink-0 self-start bg-surface-primary-cool-dark px-[0.375rem] py-500"
   >
