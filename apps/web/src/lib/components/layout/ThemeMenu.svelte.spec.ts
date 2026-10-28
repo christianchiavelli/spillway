@@ -60,7 +60,9 @@ describe('ThemeMenu', () => {
     expect(init?.method).toBe('POST');
     const body = init?.body as FormData;
     expect(body.get('theme')).toBe('dark');
-    expect(body.get('back')).toMatch(/^\//);
+    // The page to come back to: what it holds is an address, which only the
+    // app has, and the end-to-end suite follows.
+    expect(body.has('back')).toBe(true);
     // The redirect back is not followed: it would load every page's data again.
     expect(fetch).toHaveBeenCalledOnce();
   });
